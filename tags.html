@@ -43,7 +43,7 @@ MathJax.Hub.Config({
 </script>
 <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
 </head>
-<body class="entry-list">
+<body class="entry-list tags">
     <header>
     <div>
         <img src="/images/profile.jpg">
@@ -59,7 +59,157 @@ MathJax.Hub.Config({
 
     <section id="content" role="main">
 
+    <div id="tag-filter">
 
+
+            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+
+
+
+            <a class="tag" href="/tags?tag=data-processing">data-processing</a>
+
+
+
+            <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+
+
+
+            <a class="tag" href="/tags?tag=geometry">geometry</a>
+
+
+
+            <a class="tag" href="/tags?tag=image-processing">image-processing</a>
+
+
+
+            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+
+
+
+            <a class="tag" href="/tags?tag=optimization">optimization</a>
+
+
+
+            <a class="tag" href="/tags?tag=algebraic-geometry">algebraic-geometry</a>
+
+
+
+            <a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a>
+
+
+
+            <a class="tag" href="/tags?tag=interpolation">interpolation</a>
+
+
+
+            <a class="tag" href="/tags?tag=numerical-integration">numerical-integration</a>
+
+
+
+            <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+
+
+
+            <a class="tag" href="/tags?tag=web-analytics">web-analytics</a>
+
+
+
+            <a class="tag" href="/tags?tag=python">python</a>
+
+
+
+            <a class="tag" href="/tags?tag=julia">julia</a>
+
+
+
+            <a class="tag" href="/tags?tag=cassandra">cassandra</a>
+
+
+
+            <a class="tag" href="/tags?tag=elasticsearch">elasticsearch</a>
+
+
+
+            <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+
+
+
+            <a class="tag" href="/tags?tag=javascript">javascript</a>
+
+
+
+            <a class="tag" href="/tags?tag=mongodb">mongodb</a>
+
+
+
+            <a class="tag" href="/tags?tag=numpy">numpy</a>
+
+
+
+            <a class="tag" href="/tags?tag=scipy">scipy</a>
+
+
+
+            <a class="tag" href="/tags?tag=django">django</a>
+
+
+
+            <a class="tag" href="/tags?tag=flask">flask</a>
+
+
+
+            <a class="tag" href="/tags?tag=geoip">geoip</a>
+
+
+
+            <a class="tag" href="/tags?tag=hive">hive</a>
+
+
+
+            <a class="tag" href="/tags?tag=mapreduce">mapreduce</a>
+
+
+
+            <a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
+
+
+
+            <a class="tag" href="/tags?tag=multithreading">multithreading</a>
+
+
+
+            <a class="tag" href="/tags?tag=opencv">opencv</a>
+
+
+
+            <a class="tag" href="/tags?tag=painless">painless</a>
+
+
+
+            <a class="tag" href="/tags?tag=pandas">pandas</a>
+
+
+
+            <a class="tag" href="/tags?tag=pig">pig</a>
+
+
+
+            <a class="tag" href="/tags?tag=rabbitmq">rabbitmq</a>
+
+
+
+            <a class="tag" href="/tags?tag=scikit-image">scikit-image</a>
+
+
+
+            <a class="tag" href="/tags?tag=sqlalchemy">sqlalchemy</a>
+
+
+
+            <a class="tag" href="/tags?tag=tornado">tornado</a>
+
+
+    </div>
 
     <article>
         <header>
@@ -304,5 +454,31 @@ MathJax.Hub.Config({
 
 </section>
     <footer></footer>
+
+
+<script>
+  var match = /tag=([\w-]+)/.exec(window.location.search.substring(1));
+  if (match[1]) {
+    var i, j;
+    // Activate tag.
+    var tags = document.getElementById('tag-filter').getElementsByClassName('tag');
+    for (i=0; i<tags.length; i++) {
+      if (tags[i].text == match[1]) {
+        tags[i].classList.add('active');
+      }
+    }
+    // Activate articles.
+    var articles = document.getElementsByTagName('article');
+    for (i=0; i<articles.length; i++) {
+      tags = articles[i].getElementsByClassName('tag');
+      for (j=0; j<tags.length; j++) {
+        if (tags[j].text == match[1]) {
+          articles[i].classList.add('active');
+        }
+      }
+    }
+  }
+</script>
+
 </body>
 </html>

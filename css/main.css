@@ -29,7 +29,7 @@ math{font-size:17px;color:#111}math[display="block"]{margin-bottom:15px}
 .transparent{opacity:0 !important}
 .hidden{display:none !important}
 .inactive{pointer-events:none;opacity:.5}
-#tag-filter{padding:0 20px}#tag-filter a.tag{opacity:.3}#tag-filter a.tag:hover{opacity:1}
+#tag-filter{padding:0 20px}#tag-filter a.tag{opacity:.3}#tag-filter a.tag:hover{opacity:1}#tag-filter a.tag.active{opacity:1}
 pre,code{background-color:#F6F6F6;color:#262626;font-family:'Roboto Mono',monospace;font-size:14px;font-weight:400}
 pre{margin:0;padding:10px 20px;overflow-x:auto}pre code{line-height:1.5}pre.stdout{color:#666;}pre code.stdout{color:#666;}
 code .kw,code .ch{font-weight:500}
@@ -62,6 +62,8 @@ body.entry-list h1 a{font-weight:400}
 body.entry-list .no-items{margin:30px 0}
 body.entry-list article{margin-bottom:26px;padding:0 20px}
 body.entry-list article header a{color:#222}
+body.entry-list.tags article {display:none}
+body.entry-list.tags article.active {display:block}
 @media only screen and (max-width: 520px){
     html{font-size:13px}
     body>header{margin-bottom:20px}
