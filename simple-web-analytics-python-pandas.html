@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+<head>
+<meta charset="utf-8">
+<meta property="og:site_name" content="Modesto Mas | Blog">
+<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
+<meta property="og:url" content="https://mmas.github.io/simple-web-analytics-python-pandas">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+<meta name="twitter:url" content="https://mmas.github.io/simple-web-analytics-python-pandas">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:domain" content="mmas.github.io">
+
+<title>Simple web analytics with Python and Pandas</title>
+<meta name="twitter:title" content="Simple web analytics with Python and Pandas">
+<meta property="og:title" content="Simple web analytics with Python and Pandas">
+
+<meta name="description" content="We are going to do some analytics with our web visits data. As a simple report we are going to obtain the unique and total visits respect the date ...">
+<meta name="twitter:description" content="We are going to do some analytics with our web visits data. As a simple report we are going to obtain the unique and total visits respect the date ...">
+<meta property="og:description" content="We are going to do some analytics with our web visits data. As a simple report we are going to obtain the unique and total visits respect the date ...">
+
+<meta name="keywords" content="data-analysis,web-analytics,python,pandas">
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:section" content="data-analysis">
+<meta property="article:tag" content="data-analysis,web-analytics,python,pandas">
+<meta property="article:published_time" content="2015-02-13">
+<meta property="article:modified_time" content="2015-02-13">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    CommonHTML: {
+        scale: 93,
+        showMathMenu: false
+    },
+    tex2jax: {
+        "inlineMath": [["$","$"], ["\\(","\\)"]]
+    }
+});
+</script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body class="entry-detail">
+    <header>
+    <div>
+        <img src="/images/profile.jpg">
+        <a class="brand" href="/">Modesto Mas</a>
+        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+        <nav>
+            <ul>
+            <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+    <section id="content" role="main">
+<article>
+    <header>
+        <h1>Simple web analytics with Python and Pandas</h1>
+        <time datetime="2015-02-13">feb 13, 2015</time>
+        <a class="tag" href="/tags/data-analysis">data-analysis</a> <a class="tag" href="/tags/web-analytics">web-analytics</a> <a class="tag" href="/tags/python">python</a> <a class="tag" href="/tags/pandas">pandas</a>
+    </header>
+    <section class="body">
+        <p>We are going to do some analytics with our web visits data. As a simple report we are going to obtain the unique and total visits respect the date and many other paramenters like browser, page wisited, language, operative system...</p>
+
+<h2>Requirements</h2>
+
+<pre>
+% pip install python-dateutil pandas
+</pre>
+
+<h2>Getting and filtering the data</h2>
+
+<p>Let's assume the structure of our data like:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>uuid</th>
+            <th>ip</th>
+            <th>city</th>
+            <th>country_code</th>
+            <th>country_name</th>
+            <th>language</th>
+            <th>browser</th>
+            <th>os</th>
+            <th>page</th>
+            <th>date</th>
+            <th>...</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>ea2d3169-2b71-4beb-9665-108d302c3a67</td>
+            <td>78.146.232.107</td>
+            <td>London</td>
+            <td>UK</td>
+            <td>United Kingdom</td>
+            <td>EN</td>
+            <td>Firefox</td>
+            <td>Linux</td>
+            <td>/foo</td>
+            <td>2015-02-12 09:25:17.770175</td>
+            <td>...</td>
+        </tr>
+        <tr>
+            <td>bdb18e99-fc80-4d4b-b4a1-286e67ba374f</td>
+            <td>95.142.167.120</td>
+            <td>Paris</td>
+            <td>FR</td>
+            <td>France</td>
+            <td>FR</td>
+            <td>Safari</td>
+            <td>Mac</td>
+            <td>/bar</td>
+            <td>2015-02-09 21:11:02.134322</td>
+            <td>...</td>
+        </tr>
+        <tr>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+            <td>...</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>The python code:</p>
+
+<pre>
+from datetime import datetime, timedelta
+import pandas as pd
+
+
+source = pd.read_csv('data.csv', index_col='uuid', parse_dates=['date'])
+
+date_1 = datetime.utcnow()
+date_0 = date_1 - timedelta(days=30)
+
+data = source[(source['date'] > date_0) & (source['date'] < date_1)]
+</pre>
+
+<h2>Aggregating the data</h2>
+
+<p>We'll obtain data structured as:</p>
+
+<table>
+    <tr>
+        <td></td>
+        <th>unique_visits</th>
+        <th>total_visits</th>
+    </tr>
+    <tr>
+        <th>2015-01-13</th>
+        <td>90</td>
+        <td>140</td>
+    </tr>
+    <tr>
+        <th>2015-01-14</th>
+        <td>104</td>
+        <td>170</td>
+    </tr>
+    <tr>
+        <th>2015-01-15</th>
+        <td>80</td>
+        <td>193</td>
+    </tr>
+    <tr>
+        <th>...</th>
+        <td>...</td>
+        <td>...</td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td></td>
+        <th>unique_visits</th>
+        <th>total_visits</th>
+    </tr>
+    <tr>
+        <th>Linux</th>
+        <td>76</td>
+        <td>111</td>
+    </tr>
+    <tr>
+        <th>Mac</th>
+        <td>101</td>
+        <td>180</td>
+    </tr>
+    <tr>
+        <th>Windows</th>
+        <td>40</td>
+        <td>73</td>
+    </tr>
+</table>
+
+<p>The Python code:</p>
+
+<pre>
+def get_visits(groupby):
+    ip_visits = data.groupby(groupby)['ip']
+    return pd.DataFrame(
+        {'unique_visits': ip_visits.apply(lambda x: len(set(x))),
+         'total_visits': ip_visits.apply(len)})
+
+data['date_day'] = data['date'].apply(datetime.date)
+visits_by_date = get_visits('date_day')
+# Redefine with date index to avoid lack of dates.
+visits_by_date = pd.DataFrame(visits_by_date,
+                              index=pd.date_range(date_0, date_1)).fillna(0)
+# Rest of filtered visits.
+visits_by_os = get_visits('os')
+visits_by_city = get_visits('city')
+</pre>
+    </section>
+</article>
+<div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+        this.page.url = "https://mmas.github.io/simple-web-analytics-python-pandas";
+        this.page.identifier = "simple-web-analytics-python-pandas";
+    };
+    (function() {
+        var d = document, s = d.createElement('script');
+
+        s.src = '//mmast.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer></footer>
+<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
+
+</body>
+</html>

@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+<head>
+<meta charset="utf-8">
+<meta property="og:site_name" content="Modesto Mas | Blog">
+<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
+<meta property="og:url" content="https://mmas.github.io/pageviews-flask-cassandra">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+<meta name="twitter:url" content="https://mmas.github.io/pageviews-flask-cassandra">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:domain" content="mmas.github.io">
+
+<title>Collect pageviews with Flask and Cassandra</title>
+<meta name="twitter:title" content="Collect pageviews with Flask and Cassandra">
+<meta property="og:title" content="Collect pageviews with Flask and Cassandra">
+
+<meta name="description" content="Here is a simple example of collecting pageviews using Flask and Cassandra. The correct way from the client side to make a cross-site request to sa...">
+<meta name="twitter:description" content="Here is a simple example of collecting pageviews using Flask and Cassandra. The correct way from the client side to make a cross-site request to sa...">
+<meta property="og:description" content="Here is a simple example of collecting pageviews using Flask and Cassandra. The correct way from the client side to make a cross-site request to sa...">
+
+<meta name="keywords" content="data-warehousing,web-analytics,python,cassandra,flask">
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:section" content="data-warehousing">
+<meta property="article:tag" content="data-warehousing,web-analytics,python,cassandra,flask">
+<meta property="article:published_time" content="2016-07-10">
+<meta property="article:modified_time" content="2016-07-10">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    CommonHTML: {
+        scale: 93,
+        showMathMenu: false
+    },
+    tex2jax: {
+        "inlineMath": [["$","$"], ["\\(","\\)"]]
+    }
+});
+</script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body class="entry-detail">
+    <header>
+    <div>
+        <img src="/images/profile.jpg">
+        <a class="brand" href="/">Modesto Mas</a>
+        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+        <nav>
+            <ul>
+            <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+    <section id="content" role="main">
+<article>
+    <header>
+        <h1>Collect pageviews with Flask and Cassandra</h1>
+        <time datetime="2016-07-10">jul 10, 2016</time>
+        <a class="tag" href="/tags/data-warehousing">data-warehousing</a> <a class="tag" href="/tags/web-analytics">web-analytics</a> <a class="tag" href="/tags/python">python</a> <a class="tag" href="/tags/cassandra">cassandra</a> <a class="tag" href="/tags/flask">flask</a>
+    </header>
+    <section class="body">
+        <p>Here is a simple example of collecting pageviews using <a target="_blank" href="http://flask.pocoo.org/">Flask</a> and <a target="_blank" href="https://cassandra.apache.org/">Cassandra</a>. The correct way from the client side to make a cross-site request to save a pageview is using <a target="_blank" href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">CORS</a>, but since old browsers don't support CORS we will request a light image with some browser arguments.</p>
+<p>Python requirements:</p>
+<pre><code>Flask==0.11
+cassandra-driver==3.5.0
+pytz==2016.4</code></pre>
+<p>Create a Cassandra keyspace:</p>
+<pre class="cql"><code>CREATE KEYSPACE wa
+WITH REPLICATION = { &#39;class&#39; : &#39;SimpleStrategy&#39;, &#39;replication_factor&#39; : 1 };
+
+USE wa;</code></pre>
+<p>To support multiple applications, create the table <code>apps</code>:</p>
+<pre class="cql"><code>CREATE TABLE apps (
+    id uuid PRIMARY KEY,
+    name text,
+    url text
+);</code></pre>
+<p>The pageviews will be saved in a composite-keyed table with <code>app</code> as a partition key, thereby pageviews for the same app will be stored physically together. Create the composite-keyed table <code>pageviews</code>:</p>
+<pre class="cql"><code>CREATE TABLE pageviews (
+    app uuid,
+    date timestamp,
+    utma uuid,
+    utmb uuid,
+    path text,
+    title text,
+    ip text,
+    referrer text,
+    useragent text,
+    platform text,
+    language text,
+    screensize text,
+    pixelratio float,
+    PRIMARY KEY (app, date)
+);</code></pre>
+<p>Inside the <code>&lt;header&gt;</code> of each page to collect pageviews add the following script, editing the <code>APP_ID</code> to match to the database and the <code>ANALYTICS_URL</code> where the Flask app is running (also it is a good idea to <a target="_blank" href="http://javascript-minifier.com/">minimize the script</a>):</p>
+<pre class="javacript"><code>&lt;script type=&quot;text/javascript&quot;&gt;
+var d,i,q,x;
+d = {
+    app: &#39;{{APP_UUID}}&#39;,
+    path: location.pathname,
+    title: document.title,
+    platform: navigator.platform,
+    language: navigator.language,
+    screensize: screen.width+&#39;x&#39;+screen.height,
+    pixelratio: devicePixelRatio,
+    referrer: document.referrer
+};
+q = [];
+for (i in d) q.push([i,encodeURIComponent(d[i])].join(&#39;=&#39;));
+new Image().src = &#39;{{ANALYTICS_URL}}?&#39;+q.join(&#39;&amp;&#39;);
+&lt;/script&gt;</code></pre>
+<p>Now, in Flask, save the pageviews. Also, we are using the cookies <code>_utma</code> and <code>_utmb</code> in the same way Google Analytics does (more <a target="_blank" href="https://developers.google.com/analytics/devguides/collection/analyticsjs/cookie-usage#gajs">here</a>): <code>_utma</code> is used to &quot;remember&quot; a user (expires in two years) and &quot;_utmb&quot; is used to record the visit duration (expires in 30 minutes):</p>
+<pre class="sourceCode python"><code class="sourceCode python"><span class="ch">from</span> datetime <span class="ch">import</span> datetime, timedelta
+<span class="ch">from</span> uuid <span class="ch">import</span> UUID, uuid4
+<span class="ch">from</span> flask <span class="ch">import</span> Flask, request, send_file
+<span class="ch">from</span> cassandra.cluster <span class="ch">import</span> Cluster
+<span class="ch">import</span> pytz
+
+
+app = Flask(<span class="ot">__name__</span>)
+app.config.from_pyfile(<span class="st">&#39;config.py&#39;</span>)
+
+
+<span class="ot">@app.before_request</span>
+<span class="kw">def</span> before_request():
+    app.cluster = Cluster()
+    app.db = app.cluster.<span class="ot">connect</span>(<span class="st">&#39;wa&#39;</span>)
+
+
+<span class="ot">@app.teardown_request</span>
+<span class="kw">def</span> teardown_request(exception):
+    app.cluster.shutdown()
+
+
+<span class="ot">@app.route</span>(<span class="st">&#39;/&#39;</span>)
+<span class="kw">def</span> pageview():
+    data = request.args.to_dict()
+    response = send_file(<span class="st">&#39;img.gif&#39;</span>, mimetype=<span class="st">&#39;image/gif&#39;</span>)
+
+    <span class="co"># Verify app.</span>
+    <span class="kw">try</span>:
+        data[<span class="st">&#39;app&#39;</span>] = UUID(data[<span class="st">&#39;app&#39;</span>])
+    <span class="kw">except</span> <span class="ot">ValueError</span>:
+        <span class="kw">return</span> response
+    query = <span class="st">&#39;SELECT id FROM apps WHERE id=</span><span class="ot">%s</span><span class="st">&#39;</span>
+    <span class="kw">if</span> not <span class="dt">list</span>(app.db.execute(query, [data[<span class="st">&#39;app&#39;</span>]])):
+        <span class="kw">return</span> response
+
+    <span class="co"># Tracking cookies.</span>
+    now = datetime.now(pytz.timezone(<span class="st">&#39;Europe/London&#39;</span>))
+    <span class="kw">if</span> <span class="st">&#39;_utma&#39;</span> in request.cookies:
+        utma = UUID(request.cookies[<span class="st">&#39;_utma&#39;</span>])
+    <span class="kw">else</span>:
+        utma = uuid4()
+    response.set_cookie(<span class="st">&#39;_utma&#39;</span>, <span class="dt">str</span>(utma), expires=now+timedelta(days=<span class="dv">730</span>))
+    <span class="kw">if</span> <span class="st">&#39;_utmb&#39;</span> in request.cookies:
+        utmb = UUID(request.cookies[<span class="st">&#39;_utmb&#39;</span>])
+    <span class="kw">else</span>:
+        utmb = uuid4()
+    response.set_cookie(
+        <span class="st">&#39;_utmb&#39;</span>, <span class="dt">str</span>(utmb), expires=now+timedelta(seconds=<span class="dv">1800</span>))
+
+    <span class="co"># Save pageview.</span>
+    data.update(utma=utma,
+                utmb=utmb,
+                date=now,
+                ip=request.remote_addr,
+                useragent=request.headers[<span class="st">&#39;User-Agent&#39;</span>],
+                pixelratio=<span class="dt">float</span>(data.get(<span class="st">&#39;pixelratio&#39;</span>) or <span class="dv">1</span>))
+    query = <span class="st">&#39;INSERT INTO pageviews (</span><span class="ot">%s</span><span class="st">) VALUES (</span><span class="ot">%s</span><span class="st">)&#39;</span> % (
+        <span class="st">&#39;,&#39;</span>.join(data.keys()), <span class="st">&#39;,&#39;</span>.join([<span class="st">&#39;</span><span class="ot">%s</span><span class="st">&#39;</span>]*<span class="dt">len</span>(data)))
+    app.db.execute(query, data.values())
+
+    <span class="co"># Prevent HTTP caching.</span>
+    response.headers[<span class="st">&#39;Last-Modified&#39;</span>] = now
+    response.headers[<span class="st">&#39;Cache-Control&#39;</span>] = <span class="st">&#39;no-cache, no-store, must-revalidate&#39;</span>
+    response.headers[<span class="st">&#39;Pragma&#39;</span>] = <span class="st">&#39;no-cache&#39;</span>
+    response.headers[<span class="st">&#39;Expires&#39;</span>] = <span class="st">&#39;0&#39;</span>
+    <span class="kw">return</span> response
+
+
+<span class="kw">if</span> <span class="ot">__name__</span> == <span class="st">&#39;__main__&#39;</span>:
+    app.run()</code></pre>
+<p>Remember to add the <code>img.gif</code> and <code>config.py</code> file with extra settings (like <code>SERVER_NAME</code>).</p>
+
+    </section>
+</article>
+<div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+        this.page.url = "https://mmas.github.io/pageviews-flask-cassandra";
+        this.page.identifier = "pageviews-flask-cassandra";
+    };
+    (function() {
+        var d = document, s = d.createElement('script');
+
+        s.src = '//mmast.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer></footer>
+<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
+
+</body>
+</html>

@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+<head>
+<meta charset="utf-8">
+<meta property="og:site_name" content="Modesto Mas | Blog">
+<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
+<meta property="og:url" content="https://mmas.github.io/sqlalchemy-serialize-json">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+<meta name="twitter:url" content="https://mmas.github.io/sqlalchemy-serialize-json">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:domain" content="mmas.github.io">
+
+<title>SQLAlchemy JSON serialization</title>
+<meta name="twitter:title" content="SQLAlchemy JSON serialization">
+<meta property="og:title" content="SQLAlchemy JSON serialization">
+
+<meta name="description" content="Although, in these times, this should be a very trivial matter, I found some issues along the internet related to serialize SQLAlchemy model object...">
+<meta name="twitter:description" content="Although, in these times, this should be a very trivial matter, I found some issues along the internet related to serialize SQLAlchemy model object...">
+<meta property="og:description" content="Although, in these times, this should be a very trivial matter, I found some issues along the internet related to serialize SQLAlchemy model object...">
+
+<meta name="keywords" content="python,flask,sqlalchemy">
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:section" content="python">
+<meta property="article:tag" content="python,flask,sqlalchemy">
+<meta property="article:published_time" content="2015-11-26">
+<meta property="article:modified_time" content="2015-11-26">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    CommonHTML: {
+        scale: 93,
+        showMathMenu: false
+    },
+    tex2jax: {
+        "inlineMath": [["$","$"], ["\\(","\\)"]]
+    }
+});
+</script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body class="entry-detail">
+    <header>
+    <div>
+        <img src="/images/profile.jpg">
+        <a class="brand" href="/">Modesto Mas</a>
+        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+        <nav>
+            <ul>
+            <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+    <section id="content" role="main">
+<article>
+    <header>
+        <h1>SQLAlchemy JSON serialization</h1>
+        <time datetime="2015-11-26">nov 26, 2015</time>
+        <a class="tag" href="/tags/python">python</a> <a class="tag" href="/tags/flask">flask</a> <a class="tag" href="/tags/sqlalchemy">sqlalchemy</a>
+    </header>
+    <section class="body">
+        <p>Although, in these times, this should be a very trivial matter, I found some issues along the internet related to serialize <a target="_blank" href="http://www.sqlalchemy.org/">SQLAlchemy</a> model objects to JSON. Here's the way I do it.</p>
+<h2>Create a dictionary</h2>
+<p>The first thing to do is create a dictionary from the model:</p>
+<pre><code class="python">{column.key: getattr(self, attr) for attr, column in self.__mapper__.c.items()}
+</code></pre>
+
+<p>Accessing to <code>__mapper__.columns</code> keys instead of <code>__table__.columns</code> we'll avoid problems with attributes that don't match the column name, being able to get the attribute name and the column.name. For example, according to naming conventions, <a target="_blank" href="https://www.python.org/dev/peps/pep-0008/#method-names-and-instance-variables">in Python</a> the variable/attribute names must be <em>underscored</em> and in JSON, the keys must be <em>camelCased</em>:</p>
+<pre><code class="python">author_id = db.Column('authorId', db.Integer, db.ForeignKey('users.id'))
+</code></pre>
+
+<p>This field must be expressed in JSON with the column name given, <code>authorId</code> instead of <code>author_id</code>.</p>
+<h2>Relationships</h2>
+<p>In the same way, we can access to the relationships from <code>__mapper__.relationships</code>:</p>
+<pre><code class="python">relationships = {}
+for attr, relation in self.__mapper__.relationships.items():
+    value = getattr(self, attr)
+    if value is None:
+        relationships[relation.key] = None
+    elif isinstance(value.__class__, DeclarativeMeta):
+        relationships[relation.key] = value.to_dict()
+    else:
+        relationships[relation.key] = [i.to_dict() for i in value]
+</code></pre>
+
+<p>Accessing to multiple relationships may be a hard SQL query and it may end in an infinite recursive loop and causing a <code>RuntimeError</code>. We will avoid this between two tables, but more than two tables may be involved, depending on the data modelling. We will need to use the relationships serialization carefully.</p>
+<h2>The JSON encoder</h2>
+<p>We can write our JSON encoder as complex as we need it. In this example, our JSON encoder will support <code>UUID</code> and <code>datetime</code> instances:</p>
+<pre><code class="python">def to_json(self, rel=None):
+    def extended_encoder(x):
+        if isinstance(x, datetime):
+            return x.isoformat()
+        if isinstance(x, UUID):
+            return str(x)
+    return json.dumps(self.to_dict(), default=extended_encoder)
+</code></pre>
+
+<h2>Flask support</h2>
+<p>We won't need the previous step if we are working with <a target="_blank" href="http://flask.pocoo.org/">Flask</a>, since the JSON encoder will be applied to the model instance by the <code>jsonify</code> function. We will need to define the <code>__iter__</code> magic method in the model because <code>dict</code> type will be applied in the <code>jsonify</code> function:</p>
+<pre><code class="python">def __iter__(self):
+    return self.to_dict().iteritems()
+</code></pre>
+
+<p>Also, we will need to set our JSON encoder to support SQLAlchemy model instances:</p>
+<pre><code class="python">from sqlalchemy.ext.declarative import DeclarativeMeta
+from flask import Flask
+from flask.json import JSONEncoder
+
+
+class CustomJSONEncoder(JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj.__class__, DeclarativeMeta):
+            return obj.to_dict()
+        return super(CustomJSONEncoder, self).default(obj)
+
+
+app = Flask(__name__)
+app.json_encoder = CustomJSONEncoder
+</code></pre>
+
+<h2>Putting all together</h2>
+<p>We can define a mixin to use along with our models like:</p>
+<pre><code class="python">import json
+from uuid import UUID
+
+from sqlalchemy.ext.declarative import DeclarativeMeta
+
+
+class OutputMixin(object):
+    RELATIONSHIPS_TO_DICT = False
+
+    def __iter__(self):
+        return self.to_dict().iteritems()
+
+    def to_dict(self, rel=None, backref=None):
+        if rel is None:
+            rel = self.RELATIONSHIPS_TO_DICT
+        res = {column.key: getattr(self, attr)
+               for attr, column in self.__mapper__.c.items()}
+        if rel:
+            for attr, relation in self.__mapper__.relationships.items():
+                # Avoid recursive loop between to tables.
+                if backref == relation.table:
+                    continue
+                value = getattr(self, attr)
+                if value is None:
+                    res[relation.key] = None
+                elif isinstance(value.__class__, DeclarativeMeta):
+                    res[relation.key] = value.to_dict(backref=self.__table__)
+                else:
+                    res[relation.key] = [i.to_dict(backref=self.__table__)
+                                         for i in value]
+        return res
+
+    def to_json(self, rel=None):
+        def extended_encoder(x):
+            if isinstance(x, datetime):
+                return x.isoformat()
+            if isinstance(x, UUID):
+                return str(x)
+        if rel is None:
+            rel = self.RELATIONSHIPS_TO_DICT
+        return json.dumps(self.to_dict(rel), default=extended_encoder)
+</code></pre>
+
+<h2>A simple example</h2>
+<p>Here's a simple example of models for a blog:</p>
+<pre><code class="python">from datetime import datetime
+import json
+from uuid import uuid4
+
+from sqlalchemy.dialects import postgres
+
+from app import db
+
+
+tags_association = db.Table(
+    'tags_association',
+    db.Column('tag_id', db.Integer, db.ForeignKey('tags.id')),
+    db.Column('entry_id', db.Integer, db.ForeignKey('entries.id')))
+
+
+class Entry(OutputMixin, db.Model):
+    __tablename__ = 'entries'
+    RELATIONSHIPS_TO_DICT = True
+
+    id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(postgres.UUID(as_uuid=True), unique=True, default=uuid4)
+    title = db.Column(db.String(80), nullable=False)
+    body = db.Column(db.String(), nullable=False)
+    created = db.Column(db.DateTime, default=datetime.utcnow)
+    updated = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    author_id = db.Column('authorId', db.Integer, db.ForeignKey('users.id'))
+    author = db.relationship('User',
+                             backref=db.backref('entries', lazy='dynamic'))
+    tags = db.relationship('Tag',
+                           secondary=tags_association,
+                           backref=db.backref('entries', lazy='dynamic'))
+
+
+class Tag(OutputMixin, db.Model):
+    __tablename__ = 'tags'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), nullable=False)
+
+
+class User(OutputMixin, db.Model):
+    __tablename__ = 'users'
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(80), unique=True, nullable=False)
+</code></pre>
+
+<pre><code class="python">from uuid import UUID
+from app.models import Entry
+
+uuid = UUID('ae89ee70-a2b0-49cf-b2d7-f1dbc1c6827e')
+entry = Entry.query.filter_by(uuid=uuid).first_or_404()
+entry.to_json()
+</code></pre>
+
+<pre><code class="stdout">{
+  &quot;author&quot;: {
+    &quot;email&quot;: &quot;mmast@gmx.com&quot;,
+    &quot;id&quot;: 1,
+    &quot;username&quot;: &quot;modesto&quot;
+  },
+  &quot;authorId&quot;: 1,
+  &quot;body&quot;: &quot;the body&quot;,
+  &quot;created&quot;: &quot;Sat, 21 Nov 2015 18:20:12 GMT&quot;,
+  &quot;id&quot;: 1,
+  &quot;tags&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;tag1&quot;
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;name&quot;: &quot;tag2&quot;
+    }
+  ],
+  &quot;title&quot;: &quot;the title&quot;,
+  &quot;updated&quot;: &quot;Thu, 26 Nov 2015 15:04:20 GMT&quot;,
+  &quot;uuid&quot;: &quot;ae89ee70-a2b0-49cf-b2d7-f1dbc1c6827e&quot;
+}
+</code></pre>
+    </section>
+</article>
+<div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+        this.page.url = "https://mmas.github.io/sqlalchemy-serialize-json";
+        this.page.identifier = "sqlalchemy-serialize-json";
+    };
+    (function() {
+        var d = document, s = d.createElement('script');
+
+        s.src = '//mmast.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer></footer>
+<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
+
+</body>
+</html>

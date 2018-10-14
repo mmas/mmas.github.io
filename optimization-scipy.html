@@ -1,0 +1,534 @@
+
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+<head>
+<meta charset="utf-8">
+<meta property="og:site_name" content="Modesto Mas | Blog">
+<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
+<meta property="og:url" content="https://mmas.github.io/optimization-scipy">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+<meta name="twitter:url" content="https://mmas.github.io/optimization-scipy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:domain" content="mmas.github.io">
+
+<title>Optimization methods in Scipy</title>
+<meta name="twitter:title" content="Optimization methods in Scipy">
+<meta property="og:title" content="Optimization methods in Scipy">
+
+<meta name="description" content="Mathematical optimization is the selection of the best input in a function to compute the required value. In the case we are going to see, we&#39;ll tr...">
+<meta name="twitter:description" content="Mathematical optimization is the selection of the best input in a function to compute the required value. In the case we are going to see, we&#39;ll tr...">
+<meta property="og:description" content="Mathematical optimization is the selection of the best input in a function to compute the required value. In the case we are going to see, we&#39;ll tr...">
+
+<meta name="keywords" content="numerical-analysis,optimization,python,numpy,scipy">
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:section" content="numerical-analysis">
+<meta property="article:tag" content="numerical-analysis,optimization,python,numpy,scipy">
+<meta property="article:published_time" content="2015-11-07">
+<meta property="article:modified_time" content="2015-11-07">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    CommonHTML: {
+        scale: 93,
+        showMathMenu: false
+    },
+    tex2jax: {
+        "inlineMath": [["$","$"], ["\\(","\\)"]]
+    }
+});
+</script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body class="entry-detail">
+    <header>
+    <div>
+        <img src="/images/profile.jpg">
+        <a class="brand" href="/">Modesto Mas</a>
+        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+        <nav>
+            <ul>
+            <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+    <section id="content" role="main">
+<article>
+    <header>
+        <h1>Optimization methods in Scipy</h1>
+        <time datetime="2015-11-07">nov 07, 2015</time>
+        <a class="tag" href="/tags/numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags/optimization">optimization</a> <a class="tag" href="/tags/python">python</a> <a class="tag" href="/tags/numpy">numpy</a> <a class="tag" href="/tags/scipy">scipy</a>
+    </header>
+    <section class="body">
+        <p><a target="_blank" href="https://en.wikipedia.org/wiki/Mathematical_optimization">Mathematical optimization</a> is the selection of the best input in a function to compute the required value. In the case we are going to see, we'll try to find the best input arguments to obtain the minimum value of a real function, called in this case, <em>cost function</em>. This is called <em>minimization</em>.</p>
+<p>In the next examples, the functions <a target="_blank" href="http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize_scalar.html#scipy.optimize.minimize_scalar"><code>scipy.optimize.minimize_scalar</code></a> and <a target="_blank" href="http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html"><code>scipy.optimize.minimize</code></a> will be used. The examples can be done using other Scipy functions like <code>scipy.optimize.brent</code> or <code>scipy.optimize.fmin_{method_name}</code>, however, Scipy recommends to use the <code>minimize</code> and <code>minimize_scalar</code> interface instead of these specific interfaces.</p>
+<p>Finding a global minimum can be a hard task. <a target="_blank" href="https://www.scipy.org/scipylib/index.html">Scipy</a> provides different stochastic methods to do that, but it won't be covered in this article.</p>
+<p>Let's start:</p>
+<pre><code class="python">import numpy as np
+from scipy import optimize, special
+import matplotlib.pyplot as plt
+</code></pre>
+
+<h2>1D optimization</h2>
+<p>For the next examples we are going to use the <a target="_blank" href="https://en.wikipedia.org/wiki/Bessel_function#Bessel_functions_of_the_first_kind:_J.CE.B1">Bessel function of the first kind of order 0</a>, here represented in the interval (0,10].</p>
+<pre><code class="python">x = np.linspace(0, 10, 500)
+y = special.j0(x)
+plt.plot(x, y)
+plt.show()
+</code></pre>
+
+<p><img alt="Bessel function of the first kind of order 0" src="/images/bessel_j0.png"></p>
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Golden_section_search">Golden section method</a> minimizes a unimodal function by narrowing the range in the extreme values:</p>
+<pre><code class="python">optimize.minimize_scalar(special.j0, method='golden')
+</code></pre>
+
+<pre><code class="stdout">  fun: -0.40275939570255315
+    x: 3.8317059773846487
+ nfev: 43
+</code></pre>
+
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Brent's_method">Brent's method</a> is a more complex algorithm combination of other root-finding algorithms:</p>
+<pre><code class="python">optimize.minimize_scalar(special.j0, method='brent')
+</code></pre>
+
+<pre><code class="stdout">  fun: -0.40275939570255309
+ nfev: 10
+  nit: 9
+    x: 3.8317059554863437
+</code></pre>
+
+<pre><code class="python">plt.plot(x, y)
+plt.axvline(3.8317059554863437, linestyle='--', color='k')
+plt.show()
+</code></pre>
+
+<p><img alt="Miminum Bessel function of the first kind of order 0" src="/images/minimum_bessel_j0.png"></p>
+<p>As we can see in this example, Brent method minimizes the function in less objective function evaluations (key <code>nfev</code>) than the Golden section method.</p>
+<h2>Multivariate optimization</h2>
+<p>The <a target="_blank" href="https://en.wikipedia.org/wiki/Rosenbrock_function">Rosenbrock function</a> is widely used for tests performance in optimization algorithms. The Rosenbrock function has a parabolic-shaped valley with the global minimum in it.</p>
+<p>The function definition is:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>&#x2212;<!-- − --></mo>
+  <mi>x</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mi>b</mi>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo>&#x2212;<!-- − --></mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+</math>
+<p>It has a global minimum at <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mo stretchy="false">(</mo>
+  <mi>a</mi>
+  <mo>,</mo>
+  <msup>
+    <mi>a</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+</math>, where <math xmlns="http://www.w3.org/1998/Math/MathML">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mi>y</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <mn>0</mn>
+</math>.</p>
+<p>Scipy provides a multidimensional Rosenbrock function, a variant defined as:</p>
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mi>f</mi>
+  <mo stretchy="false">(</mo>
+  <mi>X</mi>
+  <mo stretchy="false">)</mo>
+  <mo>=</mo>
+  <munderover>
+    <mo movablelimits="false">&#x2211;<!-- ∑ --></mo>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>i</mi>
+      <mo>=</mo>
+      <mn>1</mn>
+    </mrow>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>N</mi>
+      <mo>&#x2212;<!-- − --></mo>
+      <mn>1</mn>
+    </mrow>
+  </munderover>
+  <mn>100</mn>
+  <mo stretchy="false">(</mo>
+  <msub>
+    <mi>x</mi>
+    <mrow class="MJX-TeXAtom-ORD">
+      <mi>i</mi>
+      <mo>+</mo>
+      <mn>1</mn>
+    </mrow>
+  </msub>
+  <mo>&#x2212;<!-- − --></mo>
+  <msubsup>
+    <mi>x</mi>
+    <mi>i</mi>
+    <mn>2</mn>
+  </msubsup>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>&#x2212;<!-- − --></mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mspace width="1em" />
+  <mi>w</mi>
+  <mi>h</mi>
+  <mi>e</mi>
+  <mi>r</mi>
+  <mi>e</mi>
+  <mspace width="1em" />
+  <mi>X</mi>
+  <mo>=</mo>
+  <mo stretchy="false">[</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>i</mi>
+  </msub>
+  <mo>,</mo>
+  <mo>.</mo>
+  <mo>.</mo>
+  <mo>.</mo>
+  <mo>,</mo>
+  <msub>
+    <mi>x</mi>
+    <mi>N</mi>
+  </msub>
+  <mo stretchy="false">]</mo>
+  <mo>&#x2208;<!-- ∈ --></mo>
+  <mrow class="MJX-TeXAtom-ORD">
+    <mi mathvariant="double-struck">R</mi>
+  </mrow>
+</math>
+<pre><code class="python">x, y = np.mgrid[-2:2:100j, -2:2:100j]
+plt.pcolor(x, y, optimize.rosen([x, y]))
+plt.plot(1, 1, 'xw')
+plt.colorbar()
+plt.axis([-2, 2, -2, 2])
+plt.title('Rosenbrock function')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.show()
+</code></pre>
+
+<p><img alt="2D Rosenbrock function" src="/images/rosenbrock_2d.png"></p>
+<p>For the next examples, we are going to use it as a 2D function, with a global minimum found at (1,1).</p>
+<p>Initial guess:</p>
+<pre><code class="python">x0 = (0., 0.)
+</code></pre>
+
+<h3>Gradient-less optimization</h3>
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method">Nelder-Mead</a> and <a target="_blank" href="https://en.wikipedia.org/wiki/Powell's_method">Powell</a> methods are used to minimize functions without the knowledge of the derivative of the function, or <em>gradient</em>.</p>
+<p>Nelder-Mead method, also known as <em>downhill simplex</em> is an heuristics method to converge in a non-stationary point:</p>
+<pre><code class="python">optimize.minimize(optimize.rosen, x0, method='Nelder-Mead')
+</code></pre>
+
+<pre><code class="stdout">  status: 0
+    nfev: 146
+ success: True
+     fun: 3.6861769151759075e-10
+       x: array([ 1.00000439,  1.00001064])
+ message: 'Optimization terminated successfully.'
+     nit: 79
+</code></pre>
+
+<p>Powel's conjugate direction method is an algorithm where the minimization is achieved by the displacement of vectors by a search for a lower point:</p>
+<pre><code class="python">optimize.minimize(optimize.rosen, x0, method='Powell')
+</code></pre>
+
+<pre><code class="stdout">  status: 0
+ success: True
+   direc: array([[  1.54785007e-02,   3.24539372e-02],
+       [  1.33646191e-06,   2.53924992e-06]])
+    nfev: 462
+     fun: 1.9721522630525295e-31
+       x: array([ 1.,  1.])
+ message: 'Optimization terminated successfully.'
+     nit: 16
+</code></pre>
+
+<p>As we can see in this case, Powell's method finds the minimum in less steps (iterations, key <code>nit</code>), but with more function evaluations than Nelder-Mead method. Modifying the initial direction of the vectors we may get a better result with less function evaluations. Let's try setting and initial direction of (1,0) from our initial guess, (0,0):</p>
+<pre><code class="python">optimize.minimize(
+    optimize.rosen, x0, method='Powell', options={'direc': (1, 0)})
+</code></pre>
+
+<pre><code class="stdout">  status: 0
+ success: True
+   direc: array([ 1.,  0.])
+    nfev: 52
+     fun: 0.0
+       x: array([ 1.,  1.])
+ message: 'Optimization terminated successfully.'
+     nit: 2
+</code></pre>
+
+<p>We'll find the minimum in considerably less function evaluations of the different points.</p>
+<p>Sometimes we can use gradient methods, like BFGS, without knowing the gradient:</p>
+<pre><code class="python">optimize.minimize(optimize.rosen, x0, method='BFGS')
+</code></pre>
+
+<pre><code class="stdout">   status: 2
+  success: False
+     njev: 32
+     nfev: 140
+ hess_inv: array([[ 0.48552643,  0.96994585],
+       [ 0.96994585,  1.94259477]])
+      fun: 1.9281078336062298e-11
+        x: array([ 0.99999561,  0.99999125])
+  message: 'Desired error not necessarily achieved due to precision loss.'
+      jac: array([ -1.07088609e-05,   5.44565446e-06])
+</code></pre>
+
+<p>In this case, we haven't achieved the optimization. We will see more about  gradient-based minimization in the next section.</p>
+<h3>Gradient-based optimization</h3>
+<p>These methods will need the derivatives of the cost function, in the case of the Rosenbrock function, the derivative is provided by Scipy, anyway, here's the simple calculation in <a target="_blank" href="http://maxima.sourceforge.net/">Maxima</a>:</p>
+<pre><code class="maxima">rosen: (1-x)^2 + 100*(y-x^2)^2;
+</code></pre>
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mn>100</mn>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo>&#x2212;<!-- − --></mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>&#x2212;<!-- − --></mo>
+  <mi>x</mi>
+  <msup>
+    <mo stretchy="false">)</mo>
+    <mn>2</mn>
+  </msup>
+</math>
+<pre><code class="maxima">rosen_d: [diff(rosen, x), diff(rosen, y)];
+</code></pre>
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mo>&#x2212;<!-- − --></mo>
+  <mn>400</mn>
+  <mi>x</mi>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo>&#x2212;<!-- − --></mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>&#x2212;<!-- − --></mo>
+  <mn>2</mn>
+  <mo stretchy="false">(</mo>
+  <mn>1</mn>
+  <mo>&#x2212;<!-- − --></mo>
+  <mi>x</mi>
+  <mo stretchy="false">)</mo>
+  <mo>,</mo>
+  <mn>200</mn>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo>&#x2212;<!-- − --></mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo stretchy="false">]</mo>
+</math>
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Conjugate_gradient_method">Conjugate gradient method</a> is similar to a simpler <a target="_blank" href="https://en.wikipedia.org/wiki/Gradient_descent">gradient descent</a> but it uses a conjugate vector and in each iteration the vector moves in a direction conjugate to the all previous steps:</p>
+<pre><code class="python">optimize.minimize(optimize.rosen, x0, method='CG', jac=optimize.rosen_der)
+</code></pre>
+
+<pre><code class="stdout">  status: 0
+ success: True
+    njev: 33
+    nfev: 33
+     fun: 6.166632297117924e-11
+       x: array([ 0.99999215,  0.99998428])
+ message: 'Optimization terminated successfully.'
+     jac: array([ -7.17661535e-06,  -4.26162510e-06])
+</code></pre>
+
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm">BFGS</a> calculates an approximation of the <em>hessian</em> of the objective function in each iteration, for that reason it is a <a target="_blank" href="https://en.wikipedia.org/wiki/Quasi-Newton_method">Quasi-Newton method</a> (more on Newton method later):</p>
+<pre><code class="python">optimize.minimize(optimize.rosen, x0, method='BFGS', jac=optimize.rosen_der)
+</code></pre>
+
+<pre><code class="stdout">   status: 0
+  success: True
+     njev: 26
+     nfev: 26
+ hess_inv: array([[ 0.48549325,  0.96988373],
+       [ 0.96988373,  1.94247917]])
+      fun: 1.1678517168020135e-16
+        x: array([ 1.00000001,  1.00000002])
+  message: 'Optimization terminated successfully.'
+      jac: array([ -2.42849398e-07,   1.30055966e-07])
+</code></pre>
+
+<p>BFGS achieves the optimization on less evaluations of the cost and jacobian function than the Conjugate gradient method, however the calculation of the <em>hessian</em> can be more expensive than the product of matrices and vectors used in the Conjugate gradient.</p>
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Limited-memory_BFGS">L-BFGS</a> is a low-memory aproximation of BFGS. Concretely, the Scipy implementation is L-BFGS-B, which can handle box constraints using the <code>bounds</code> argument:</p>
+<pre><code class="python">optimize.minimize(optimize.rosen,
+                  x0,
+                  method='L-BFGS-B',
+                  jac=optimize.rosen_der)
+</code></pre>
+
+<pre><code class="stdout">  status: 0
+ success: True
+    nfev: 25
+     fun: 1.0433892998247468e-13
+       x: array([ 0.99999971,  0.9999994 ])
+ message: 'CONVERGENCE: NORM_OF_PROJECTED_GRADIENT_&lt;=_PGTOL'
+     jac: array([  4.74035377e-06,  -2.66444085e-06])
+     nit: 21
+</code></pre>
+
+<h3>Hessian-based optimization</h3>
+<p><a target="_blank" href="https://en.wikipedia.org/wiki/Newton's_method_in_optimization">Newton's method</a> uses the first and the second derivative (jacobian and hessian) of the objective function in each iteration.</p>
+<p>This is the hessian matrix of the Rosenbrock function, calculated with Maxima:</p>
+<pre><code class="maxima">rosen_d2: [[diff(rosen_d[1], x), diff(rosen_d[1], y)],
+           [diff(rosen_d[2], x), diff(rosen_d[2], y)]];
+</code></pre>
+
+<math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+  <mo stretchy="false">[</mo>
+  <mo stretchy="false">[</mo>
+  <mo>&#x2212;<!-- − --></mo>
+  <mn>400</mn>
+  <mo stretchy="false">(</mo>
+  <mi>y</mi>
+  <mo>&#x2212;<!-- − --></mo>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo stretchy="false">)</mo>
+  <mo>+</mo>
+  <mn>800</mn>
+  <msup>
+    <mi>x</mi>
+    <mn>2</mn>
+  </msup>
+  <mo>+</mo>
+  <mn>2</mn>
+  <mo>,</mo>
+  <mo>&#x2212;<!-- − --></mo>
+  <mn>400</mn>
+  <mi>x</mi>
+  <mo stretchy="false">]</mo>
+  <mo>,</mo>
+  <mo stretchy="false">[</mo>
+  <mo>&#x2212;<!-- − --></mo>
+  <mn>400</mn>
+  <mi>x</mi>
+  <mo>,</mo>
+  <mn>200</mn>
+  <mo stretchy="false">]</mo>
+  <mo stretchy="false">]</mo>
+</math>
+
+<p>Minimization Rosenbrock function using Newton's method with jacobian and hessian matrix:</p>
+<pre><code class="python">optimize.minimize(optimize.rosen,
+                  x0,
+                  method='Newton-CG',
+                  jac=optimize.rosen_der,
+                  hess=optimize.rosen_hess)
+</code></pre>
+
+<pre><code class="stdout">  status: 0
+ success: True
+    njev: 85
+    nfev: 53
+     fun: 1.4946283615394615e-09
+       x: array([ 0.99996137,  0.99992259])
+ message: 'Optimization terminated successfully.'
+    nhev: 33
+     jac: array([ 0.01269975, -0.00637599])
+</code></pre>
+
+<p>Here we don't have a lower evaluations than the previous methods but we can use Newton's method for twice-differentiable quadratic functions to get faster results.</p>
+    </section>
+</article>
+<div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+        this.page.url = "https://mmas.github.io/optimization-scipy";
+        this.page.identifier = "optimization-scipy";
+    };
+    (function() {
+        var d = document, s = d.createElement('script');
+
+        s.src = '//mmast.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer></footer>
+<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
+
+</body>
+</html>

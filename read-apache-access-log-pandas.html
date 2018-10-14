@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+<head>
+<meta charset="utf-8">
+<meta property="og:site_name" content="Modesto Mas | Blog">
+<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
+<meta property="og:url" content="https://mmas.github.io/read-apache-access-log-pandas">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+<meta name="twitter:url" content="https://mmas.github.io/read-apache-access-log-pandas">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:domain" content="mmas.github.io">
+
+<title>Read Apache HTTP server access log with Pandas</title>
+<meta name="twitter:title" content="Read Apache HTTP server access log with Pandas">
+<meta property="og:title" content="Read Apache HTTP server access log with Pandas">
+
+<meta name="description" content="In this post we&#39;ll see how to read our Apache HTTP server access log into a Pandas dataframe. First of all, we should take a look to the logging do...">
+<meta name="twitter:description" content="In this post we&#39;ll see how to read our Apache HTTP server access log into a Pandas dataframe. First of all, we should take a look to the logging do...">
+<meta property="og:description" content="In this post we&#39;ll see how to read our Apache HTTP server access log into a Pandas dataframe. First of all, we should take a look to the logging do...">
+
+<meta name="keywords" content="python,pandas">
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:section" content="python">
+<meta property="article:tag" content="python,pandas">
+<meta property="article:published_time" content="2015-11-15">
+<meta property="article:modified_time" content="2015-11-15">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    CommonHTML: {
+        scale: 93,
+        showMathMenu: false
+    },
+    tex2jax: {
+        "inlineMath": [["$","$"], ["\\(","\\)"]]
+    }
+});
+</script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body class="entry-detail">
+    <header>
+    <div>
+        <img src="/images/profile.jpg">
+        <a class="brand" href="/">Modesto Mas</a>
+        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+        <nav>
+            <ul>
+            <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+    <section id="content" role="main">
+<article>
+    <header>
+        <h1>Read Apache HTTP server access log with Pandas</h1>
+        <time datetime="2015-11-15">nov 15, 2015</time>
+        <a class="tag" href="/tags/python">python</a> <a class="tag" href="/tags/pandas">pandas</a>
+    </header>
+    <section class="body">
+        <p>In this post we'll see how to read our <a target="_blank" href="https://httpd.apache.org/">Apache HTTP server</a> access log into a <a target="_blank" href="http://pandas.pydata.org/">Pandas</a> dataframe. First of all, we should take a look to the <a target="_blank" href="https://httpd.apache.org/docs/2.2/logs.html">logging documentation</a> to see how the log lines are formatted. In this case, we are going to use the <em>combined log format</em>, which corresponds to:</p>
+<pre><code>%h %l %u %t \&quot;%r\&quot; %&gt;s %b \&quot;%{Referer}i\&quot; \&quot;%{User-agent}i\&quot;
+</code></pre>
+
+<p>Where</p>
+<p><code>%h</code> is the IP address of the client (remote host);</p>
+<p><code>%l</code> is RFC 1413 identity (not determined);</p>
+<p><code>%u</code> is the user id, determined by the HTTP authentication;</p>
+<p><code>%t</code> is the time, by default, formatted as <code>[day/month/year:hour:minute:second zone]</code>;</p>
+<p><code>\"%r\"</code> is the request string, formatted as <code>"method resource protocol"</code></p>
+<p><code>%&gt;s</code> is the status code;</p>
+<p><code>%O</code> is the request size;</p>
+<p><code>\"%{Referer}i\"</code> is the Referer HTTP request header and</p>
+<p><code>\"%{User-Agent}i\"</code> is the User-Agent HTTP request header.</p>
+<p>Knowing this, let's define our field delimiter and some field parsers.</p>
+<p>Although Pandas provide the <code>quotechar</code> and <code>quoting</code> arguments in the readers to skip a quoted character (by default, <code>"</code>), allowing the delimiter character within a quoted text (we have three fields with quoted text), these doesn't work properly in a more complex regular expression to delimit the columns. So, in our case, we'll need to define a regular expression to split each line to get our initial nine fields. This needs to match the spaces not surrounded by double quotes (<code>"</code>) nor squared brackets (<code>[]</code>). Then, it will be:</p>
+<pre><code>\s                           # Match space.
+(?=(?:[^&quot;]*&quot;[^&quot;]*&quot;)*[^&quot;]*$)  # Not surrounded by &quot;.
+(?![^\[]*\])                 # Not surrounded by [].
+</code></pre>
+
+<p>Time, request, Referer and User-Agent are surrounded by quotes or squared brackets, we will need a function to remove them. Also, the time needs to be parsed and formated as a <code>datetime</code> object:</p>
+<pre><code class="python">from datetime import datetime
+import pytz
+
+def parse_str(x):
+    &quot;&quot;&quot;
+    Returns the string delimited by two characters.
+
+    Example:
+        `&gt;&gt;&gt; parse_str('[my string]')`
+        `'my string'`
+    &quot;&quot;&quot;
+    return x[1:-1]
+
+def parse_datetime(x):
+    '''
+    Parses datetime with timezone formatted as:
+        `[day/month/year:hour:minute:second zone]`
+
+    Example:
+        `&gt;&gt;&gt; parse_datetime('13/Nov/2015:11:45:42 +0000')`
+        `datetime.datetime(2015, 11, 3, 11, 45, 4, tzinfo=&lt;UTC&gt;)`
+
+    Due to problems parsing the timezone (`%z`) with `datetime.strptime`, the
+    timezone will be obtained using the `pytz` library.
+    '''
+    dt = datetime.strptime(x[1:-7], '%d/%b/%Y:%H:%M:%S')
+    dt_tz = int(x[-6:-3])*60+int(x[-3:-1])
+    return dt.replace(tzinfo=pytz.FixedOffset(dt_tz))
+</code></pre>
+
+<p>Next, we can read our access log file. In my case I'm not going to save the second and third column:</p>
+<pre><code class="python">import re
+import pandas as pd
+
+data = pd.read_csv(
+    'data/access.log',
+    sep=r'\s(?=(?:[^&quot;]*&quot;[^&quot;]*&quot;)*[^&quot;]*$)(?![^\[]*\])',
+    engine='python',
+    na_values='-',
+    header=None,
+    usecols=[0, 3, 4, 5, 6, 7, 8],
+    names=['ip', 'time', 'request', 'status', 'size', 'referer', 'user_agent'],
+    converters={'time': parse_datetime,
+                'request': parse_str,
+                'status': int,
+                'size': int,
+                'referer': parse_str,
+                'user_agent': parse_str})
+</code></pre>
+
+<pre><code class="python">data.head()
+</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>ip</th>
+      <th>time</th>
+      <th>request</th>
+      <th>status</th>
+      <th>size</th>
+      <th>referer</th>
+      <th>user_agent</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>66.249.79.73</td>
+      <td>[08/Nov/2015:08:09:02 +0000]</td>
+      <td>GET /blog/python-image-processing-libraries-pe...</td>
+      <td>200</td>
+      <td>2754</td>
+      <td>NaN</td>
+      <td>Mozilla/5.0 (compatible; Googlebot/2.1; +http:...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>123.125.71.41</td>
+      <td>[08/Nov/2015:08:09:51 +0000]</td>
+      <td>GET / HTTP/1.1</td>
+      <td>200</td>
+      <td>1421</td>
+      <td>NaN</td>
+      <td>Mozilla/5.0 (Windows NT 5.1; rv:6.0.2) Gecko/2...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>123.125.71.25</td>
+      <td>[08/Nov/2015:08:09:52 +0000]</td>
+      <td>GET / HTTP/1.1</td>
+      <td>200</td>
+      <td>4747</td>
+      <td>NaN</td>
+      <td>Mozilla/5.0 (Windows NT 5.1; rv:6.0.2) Gecko/2...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>45.55.223.156</td>
+      <td>[08/Nov/2015:08:10:02 +0000]</td>
+      <td>GET / HTTP/1.0</td>
+      <td>200</td>
+      <td>4706</td>
+      <td>NaN</td>
+      <td>Mozilla/5.0 (compatible; NetcraftSurveyAgent/1...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>180.76.15.5</td>
+      <td>[08/Nov/2015:08:13:28 +0000]</td>
+      <td>GET / HTTP/1.1</td>
+      <td>200</td>
+      <td>4747</td>
+      <td>NaN</td>
+      <td>Mozilla/5.0 (compatible; Baiduspider/2.0; +htt...</td>
+    </tr>
+  </tbody>
+</table>
+
+<pre><code class="python">data.info()
+</code></pre>
+
+<pre><code class="stdout">&lt;class 'pandas.core.frame.DataFrame'&gt;
+Int64Index: 50666 entries, 0 to 50665
+Data columns (total 7 columns):
+ip            50666 non-null object
+time          50666 non-null object
+request       50666 non-null object
+status        50666 non-null int64
+size          50666 non-null int64
+referer       20784 non-null object
+user_agent    50465 non-null object
+dtypes: int64(2), object(5)
+memory usage: 3.1+ MB
+</code></pre>
+
+<p>We can continue creating new columns from the existing ones and filtering out some rows.</p>
+<p>Get resource URI:</p>
+<pre><code class="python">request = data.pop('request').str.split()
+data['resource'] = request.str[1]
+</code></pre>
+
+<p>Filter out non GET and non 200 requests:</p>
+<pre><code class="python">data = data[(request.str[0] == 'GET') &amp; (data.pop('status') == 200)]
+</code></pre>
+
+<p>Filter out undesired resources:</p>
+<pre><code class="python">data = data[~data['resource'].str.match(
+    r'^/media|^/static|^/admin|^/robots.txt$|^/favicon.ico$')]
+</code></pre>
+
+<p>Last, we can drop out the web crawlers, such as <em>spiders</em> from Google, Yahoo!... Just as a simple example we can filter crawlers by User-Agent:</p>
+<pre><code class="python">data = data[~data['user_agent'].str.match(
+    r'.*?bot|.*?spider|.*?crawler|.*?slurp', flags=re.I).fillna(False)]
+</code></pre>
+
+<p>and by IP:</p>
+<pre><code class="python">data = data[~data['ip'].str.startswith('123.125.71.')]  # Baidu IPs.
+</code></pre>
+
+<pre><code class="python">data.info()
+</code></pre>
+
+<pre><code class="stdout">&lt;class 'pandas.core.frame.DataFrame'&gt;
+Int64Index: 8840 entries, 3 to 50665
+Data columns (total 6 columns):
+ip            8840 non-null object
+time          8840 non-null object
+size          8840 non-null int64
+referer       2266 non-null object
+user_agent    8808 non-null object
+resource      8840 non-null object
+dtypes: int64(1), object(5)
+memory usage: 483.4+ KB
+</code></pre>
+
+<p>In the next post, we will do some analysis with this data.</p>
+    </section>
+</article>
+<div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+        this.page.url = "https://mmas.github.io/read-apache-access-log-pandas";
+        this.page.identifier = "read-apache-access-log-pandas";
+    };
+    (function() {
+        var d = document, s = d.createElement('script');
+
+        s.src = '//mmast.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer></footer>
+<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
+
+</body>
+</html>

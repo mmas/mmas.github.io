@@ -1,0 +1,315 @@
+
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+<head>
+<meta charset="utf-8">
+<meta property="og:site_name" content="Modesto Mas | Blog">
+<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+<meta property="og:image:width" content="200">
+<meta property="og:image:height" content="200">
+<meta property="og:url" content="https://mmas.github.io/linear-transformations-numpy">
+<meta property="og:locale" content="en_GB">
+<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+<meta name="twitter:url" content="https://mmas.github.io/linear-transformations-numpy">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:domain" content="mmas.github.io">
+
+<title>Linear transformations in Numpy</title>
+<meta name="twitter:title" content="Linear transformations in Numpy">
+<meta property="og:title" content="Linear transformations in Numpy">
+
+<meta name="description" content="A linear transformation of the plane \(\mathbb R^2\) is a geometric transformation of the form
+\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pma...">
+<meta name="twitter:description" content="A linear transformation of the plane \(\mathbb R^2\) is a geometric transformation of the form
+\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pma...">
+<meta property="og:description" content="A linear transformation of the plane \(\mathbb R^2\) is a geometric transformation of the form
+\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pma...">
+
+<meta name="keywords" content="geometry,geometric-transformations,python,numpy,matplotlib">
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:section" content="geometry">
+<meta property="article:tag" content="geometry,geometric-transformations,python,numpy,matplotlib">
+<meta property="article:published_time" content="2016-06-11">
+<meta property="article:modified_time" content="2016-06-11">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    CommonHTML: {
+        scale: 93,
+        showMathMenu: false
+    },
+    tex2jax: {
+        "inlineMath": [["$","$"], ["\\(","\\)"]]
+    }
+});
+</script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+</head>
+<body class="entry-detail">
+    <header>
+    <div>
+        <img src="/images/profile.jpg">
+        <a class="brand" href="/">Modesto Mas</a>
+        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+        <nav>
+            <ul>
+            <li><a href="/tags">Tags</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+    <section id="content" role="main">
+<article>
+    <header>
+        <h1>Linear transformations in Numpy</h1>
+        <time datetime="2016-06-11">jun 11, 2016</time>
+        <a class="tag" href="/tags/geometry">geometry</a> <a class="tag" href="/tags/geometric-transformations">geometric-transformations</a> <a class="tag" href="/tags/python">python</a> <a class="tag" href="/tags/numpy">numpy</a> <a class="tag" href="/tags/matplotlib">matplotlib</a>
+    </header>
+    <section class="body">
+        <p>A linear transformation of the plane <span class="math">\(\mathbb R^2\)</span> is a geometric transformation of the form</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pmatrix}a&amp;b\\c&amp;d\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>where <span class="math">\(a\)</span>, <span class="math">\(b\)</span>, <span class="math">\(c\)</span> and <span class="math">\(d\)</span> are real constants.</p>
+<p>Linear transformations leave the origin fixed and preserve parallelism. Scaling, shearing, rotation and reflexion of a plane are examples of linear transformations.</p>
+<p>Applying a geometric transformation to a given matrix in Numpy requires applying the inverse of the transformation to the coordinates of the matrix, create a new matrix of indices from the coordinates and map the matrix to the new indices. Since this can be tricky, let's start with a simple example involving a matrix that represents the indices itself.</p>
+<h2>A simple example. Indices transformation</h2>
+<p>Start with a simple 3x4 matrix:</p>
+<pre class="sourceCode python"><code class="sourceCode python">&gt;&gt;&gt; <span class="ch">import</span> numpy <span class="ch">as</span> np
+&gt;&gt;&gt; M, N = <span class="dv">3</span>, <span class="dv">4</span>
+&gt;&gt;&gt; matrix = np.arange(M*N).reshape((M,N))
+&gt;&gt;&gt; matrix
+array([[ <span class="dv">0</span>,  <span class="dv">1</span>,  <span class="dv">2</span>,  <span class="dv">3</span>],
+       [ <span class="dv">4</span>,  <span class="dv">5</span>,  <span class="dv">6</span>,  <span class="dv">7</span>],
+       [ <span class="dv">8</span>,  <span class="dv">9</span>, <span class="dv">10</span>, <span class="dv">11</span>]])</code></pre>
+<p>Then, we need to obtain the indices pairs of the matrix in a matrix form. The new indices of the matrix will result from the product of the inverse of the transformation matrix and this matrix, therefore the indices pairs in this case need to be a 2x12 matrix as</p>
+<p><span class="math">\[
+\mathbf p =
+\begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 &amp; 3 &amp; 3 &amp; 3 \\
+0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2
+\end{pmatrix},
+\]</span></p>
+<p>then:</p>
+<pre class="sourceCode python"><code class="sourceCode python">&gt;&gt;&gt; points = np.mgrid[<span class="dv">0</span>:N, <span class="dv">0</span>:M].reshape((<span class="dv">2</span>, M*N))
+&gt;&gt;&gt; points
+array([[<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">3</span>, <span class="dv">3</span>],
+       [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]])</code></pre>
+<p>An alternative way to get the indices pairs, longer but maybe more obvious:</p>
+<pre class="sourceCode python"><code class="sourceCode python">&gt;&gt;&gt; x, y = np.mgrid[<span class="dv">0</span>:N, <span class="dv">0</span>:M]
+&gt;&gt;&gt; points = np.vstack([x.ravel(), y.ravel()])</code></pre>
+<p>Now, apply the transformation to the indices pairs. The new indices pairs need to be integers to map the given matrix to the indices. In this example the result will be just casted to integers for simplicity, then it will be easy to spot the result of the transformation since it involve points halfway between two integers. Other methods require interpolations of the given matrix from the indices. As an example, the transformation matrix will be</p>
+<p><span class="math">\[
+\mathbf A = \begin{pmatrix}2&amp;0\\0&amp;1\end{pmatrix},
+\]</span></p>
+<p>which corresponds with scaling the plane in the <span class="math">\(x\)</span>-axis by a factor of <span class="math">\(2\)</span>. Hence, the new indices pairs are</p>
+<p><span class="math">\[
+\mathbf p&#39; = \lfloor \mathbf A \mathbf p \rfloor =
+\begin{pmatrix}
+0&amp;0&amp;0&amp;0&amp;0&amp;0&amp;1&amp;1&amp;1&amp;1&amp;1&amp;1\\
+0&amp;1&amp;2&amp;0&amp;1&amp;2&amp;0&amp;1&amp;2&amp;0&amp;1&amp;2
+\end{pmatrix},
+\]</span></p>
+<p>then:</p>
+<pre class="sourceCode python"><code class="sourceCode python">&gt;&gt;&gt; a = np.array([[<span class="dv">2</span>, <span class="dv">0</span>],
+                  [<span class="dv">0</span>, <span class="dv">1</span>]])
+&gt;&gt;&gt; new_points = np.linalg.inv(a).dot(points).astype(<span class="dt">int</span>)
+&gt;&gt;&gt; new_points
+array([[<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>, <span class="dv">1</span>],
+       [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>]])</code></pre>
+<p>To finish this example, convert the indices pairs to a matrix of indices which in this example corresponds with the resulting matrix.</p>
+<p>The <span class="math">\(x\)</span> components is</p>
+<p><span class="math">\[
+\mathbf x =
+\begin{pmatrix}
+0 &amp; 0 &amp; 1 &amp; 1 \\
+0 &amp; 0 &amp; 1 &amp; 1 \\
+0 &amp; 0 &amp; 1 &amp; 1
+\end{pmatrix},
+\]</span></p>
+<p>the <span class="math">\(y\)</span> component is</p>
+<p><span class="math">\[
+\mathbf y =
+\begin{pmatrix}
+0 &amp; 0 &amp; 0 &amp; 0 \\
+1 &amp; 1 &amp; 1 &amp; 1 \\
+2 &amp; 2 &amp; 2 &amp; 2
+\end{pmatrix},
+\]</span></p>
+<p>and the resulting matrix from the <span class="math">\(x\)</span> and <span class="math">\(y\)</span> components is</p>
+<p><span class="math">\[
+\mathbf x + N \mathbf y =
+\begin{pmatrix}
+0 &amp; 0 &amp; 1 &amp; 1 \\
+4 &amp; 4 &amp; 5 &amp; 5 \\
+8 &amp; 8 &amp; 9 &amp; 9
+\end{pmatrix}.
+\]</span></p>
+<p>Here it is easy to spot the scaling of the values along the <span class="math">\(x\)</span>-axis in the matrix. These final steps correspond to:</p>
+<pre class="sourceCode python"><code class="sourceCode python">&gt;&gt;&gt; x, y = new_points.reshape((<span class="dv">2</span>, M, N), order=<span class="st">&#39;F&#39;</span>)
+&gt;&gt;&gt; x + N*y
+array([[<span class="dv">0</span>, <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">1</span>],
+       [<span class="dv">4</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">5</span>],
+       [<span class="dv">8</span>, <span class="dv">8</span>, <span class="dv">9</span>, <span class="dv">9</span>]])</code></pre>
+<h2>A more visual example. Matrix transformation</h2>
+<p>In the following example we will use a bigger matrix, represented as an image for visual support. Once we calculate the new indices matrix we will map the original matrix to the new indices, wrapping the out-of-bounds indices to obtain a continuous plane using <a target="_blank" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.take.html">numpy.take</a> with <code>mode='wrap'</code>.</p>
+<pre class="sourceCode python"><code class="sourceCode python"><span class="ch">import</span> matplotlib <span class="ch">as</span> mpl
+<span class="ch">import</span> matplotlib.pyplot <span class="ch">as</span> plt</code></pre>
+<p>Some visual settings:</p>
+<pre class="sourceCode python"><code class="sourceCode python">mpl.rcParams.update({<span class="st">&#39;image.cmap&#39;</span>: <span class="st">&#39;Accent&#39;</span>,
+                     <span class="st">&#39;image.interpolation&#39;</span>: <span class="st">&#39;none&#39;</span>,
+                     <span class="st">&#39;xtick.major.width&#39;</span>: <span class="dv">0</span>,
+                     <span class="st">&#39;xtick.labelsize&#39;</span>: <span class="dv">0</span>,
+                     <span class="st">&#39;ytick.major.width&#39;</span>: <span class="dv">0</span>,
+                     <span class="st">&#39;ytick.labelsize&#39;</span>: <span class="dv">0</span>,
+                     <span class="st">&#39;axes.linewidth&#39;</span>: <span class="dv">0</span>})</code></pre>
+<p>Create a 200x200 matrix for this example:</p>
+<pre class="sourceCode python"><code class="sourceCode python">aux = np.ones((<span class="dv">100</span>, <span class="dv">100</span>), dtype=<span class="dt">int</span>)
+src = np.vstack([np.c_[aux, <span class="dv">2</span>*aux], np.c_[<span class="dv">3</span>*aux, <span class="dv">4</span>*aux]])
+plt.imshow(src)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_1_linear_transformation_numpy.png" />
+</div>
+<p>The linear transformation function, which includes the operations of the previous examples but rounding the new indices pairs and mapping the source matrix to the new indices might be written as follows:</p>
+<pre class="sourceCode python"><code class="sourceCode python"><span class="kw">def</span> linear_transformation(src, a):
+    M, N = src.shape
+    points = np.mgrid[<span class="dv">0</span>:N, <span class="dv">0</span>:M].reshape((<span class="dv">2</span>, M*N))
+    new_points = np.linalg.inv(a).dot(points).<span class="dt">round</span>().astype(<span class="dt">int</span>)
+    x, y = new_points.reshape((<span class="dv">2</span>, M, N), order=<span class="st">&#39;F&#39;</span>)
+    indices = x + N*y
+    <span class="kw">return</span> np.take(src, indices, mode=<span class="st">&#39;wrap&#39;</span>)</code></pre>
+<p>Let's see some linear transformations we can do.</p>
+<p>Scaling the plane in the <span class="math">\(x\)</span>-axis by a factor of 1.5:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pmatrix}1.5 &amp; 0\\0 &amp; 0\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">a = np.array([[<span class="fl">1.5</span>, <span class="dv">0</span>],
+              [<span class="dv">0</span>, <span class="dv">1</span>]])
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_2_linear_transformation_numpy.png" />
+</div>
+<p>Dilating the plane by a factor of 1.8:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pmatrix}1.8 &amp; 0\\0 &amp; 1.8\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">a = <span class="fl">1.8</span>*np.eye(<span class="dv">2</span>)
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_3_linear_transformation_numpy.png" />
+</div>
+<p>Dilating the plane by a factor of 0.5:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pmatrix}0.5 &amp; 0\\0 &amp; 0.5\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">a = .<span class="dv">5</span>*np.eye(<span class="dv">2</span>)
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_4_linear_transformation_numpy.png" />
+</div>
+<p>Scaling the plane in the <span class="math">\(y\)</span>-axis by a factor of 0.5:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pmatrix}1 &amp; 0\\0 &amp; 0.5\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">a = np.array([[<span class="dv">1</span>, <span class="dv">0</span>],
+              [<span class="dv">0</span>, .<span class="dv">5</span>]])
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_5_linear_transformation_numpy.png" />
+</div>
+<p>Shearing about the <span class="math">\(y\)</span>-axis with a vertical displacement of <span class="math">\(+x/2\)</span>:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} = \begin{pmatrix}1 &amp; 0\\{1 \over 2} &amp; 0\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">a = np.array([[<span class="dv">1</span>, <span class="dv">0</span>],
+              [.<span class="dv">5</span>, <span class="dv">1</span>]])
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_6_linear_transformation_numpy.png" />
+</div>
+<p>Rotation through <span class="math">\(45^{\circ}\)</span> about the origin:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} =
+\begin{pmatrix}
+\cos{\pi \over 4} &amp; -\sin{\pi \over 4} \\
+\sin{\pi \over 4} &amp; \cos{\pi \over 4}
+\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">alpha = np.pi/<span class="dv">4</span>
+a = np.array([[np.cos(alpha), -np.sin(alpha)],
+              [np.sin(alpha), np.cos(alpha)]])
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_7_linear_transformation_numpy.png" />
+</div>
+<p>Reflexion in a line with inclination of <span class="math">\(45^{\circ}\)</span> through the origin:</p>
+<p><span class="math">\[
+f \begin{pmatrix}x\\y\end{pmatrix} =
+\begin{pmatrix}
+\cos{\pi \over 2} &amp; \sin{\pi \over 2} \\
+\sin{\pi \over 2} &amp; -\cos{\pi \over 2}
+\end{pmatrix} \begin{pmatrix}x\\y\end{pmatrix},
+\]</span></p>
+<p>in Numpy:</p>
+<pre class="sourceCode python"><code class="sourceCode python">alpha = np.pi/<span class="dv">4</span>
+a = np.array([[np.cos(<span class="dv">2</span>*alpha), np.sin(<span class="dv">2</span>*alpha)],
+              [np.sin(<span class="dv">2</span>*alpha), -np.cos(<span class="dv">2</span>*alpha)]])
+dst = linear_transformation(src, a)
+plt.imshow(dst)
+plt.show()</code></pre>
+<div class="figure">
+<img style="max-width:600px" alt="Linear transformation example in Numpy" src="https://mmas.github.io/images/figure_8_linear_transformation_numpy.png" />
+</div>
+    </section>
+</article>
+<div id="disqus_thread"></div>
+<script>
+    var disqus_config = function () {
+        this.page.url = "https://mmas.github.io/linear-transformations-numpy";
+        this.page.identifier = "linear-transformations-numpy";
+    };
+    (function() {
+        var d = document, s = d.createElement('script');
+
+        s.src = '//mmast.disqus.com/embed.js';
+
+        s.setAttribute('data-timestamp', +new Date());
+        (d.head || d.body).appendChild(s);
+    })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+<footer></footer>
+<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
+
+</body>
+</html>
