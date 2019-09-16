@@ -121,7 +121,7 @@ dst = cv2.GaussianBlur(img, (0, 0), 5)
 dst = imfilter.gaussian_filter(img, 5, multichannel=True)
 </pre>
 
-<img src="/media/images/lena_gaussian.png" alt="image filter: gaussian filter">
+<img src="/images/lena_gaussian.png" alt="image filter: gaussian filter">
 
 <h2>Linear filter: sobel (1-channel)</h2>
 
@@ -138,7 +138,7 @@ dst = cv2.Sobel(img, cv2.CV_8U, 1, 0)
 dst = imfilter.hsobel(img)
 </pre>
 
-<img src="/media/images/lena_sobel.png" alt="image filter: sobel filter">
+<img src="/images/lena_sobel.png" alt="image filter: sobel filter">
 
 <h2>Non-linear filter: median (3-channel)</h2>
 
@@ -154,7 +154,7 @@ for i in xrange(img.shape[2]):
 dst = cv2.medianBlur(img, 5)
 </pre>
 
-<img src="/media/images/lena_median.png" alt="image filter: median filter">
+<img src="/images/lena_median.png" alt="image filter: median filter">
 
 <h2>Morphological operation: dilation (1-channel)</h2>
 
@@ -172,7 +172,7 @@ dst = nd.binary_dilation(img, kernel, iterations=1)
 dst = morphology.binary_dilation(img, kernel)
 </pre>
 
-<img src="/media/images/coins_dilate.png" alt="image morphology: dilation">
+<img src="/images/coins_dilate.png" alt="image morphology: dilation">
 
 <h2>Results</h2>
 
@@ -236,7 +236,7 @@ plt.axes().xaxis.grid(True)
 plt.show()
 </pre>
 
-<img src="/media/images/image_processing_performance_plot.png" alt="python image processing performance plot">
+<img src="/images/image_processing_performance_plot.png" alt="python image processing performance plot">
     </section>
 </article>
 <div id="disqus_thread"></div>
