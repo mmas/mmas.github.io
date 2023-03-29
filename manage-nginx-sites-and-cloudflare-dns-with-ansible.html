@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+  <head>
+    <title>Manage Nginx sites and Cloudflare DNS with Ansible</title>
+    
+
+    <meta charset="utf-8">
+    <meta property="og:title" content="Manage Nginx sites and Cloudflare DNS with Ansible">
+    <meta property="og:site_name" content="Modesto Mas | Blog">
+    <meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:url" content="https://mmas.github.io/manage-nginx-sites-and-cloudflare-dns-with-ansible">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta name="twitter:url" content="https://mmas.github.io/manage-nginx-sites-and-cloudflare-dns-with-ansible">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="mmas.github.io">
+    <meta name="twitter:title" content="Manage Nginx sites and Cloudflare DNS with Ansible">
+    <meta name="description" content="In this article, using Ansible, we will Install and configure Nginx Install and configure Certbot for Cloudflare Create Nginx sites Create DNS records...">
+    <meta name="twitter:description" content="In this article, using Ansible, we will Install and configure Nginx Install and configure Certbot for Cloudflare Create Nginx sites Create DNS records...">
+    <meta property="og:description" content="In this article, using Ansible, we will Install and configure Nginx Install and configure Certbot for Cloudflare Create Nginx sites Create DNS records...">
+    <meta name="keywords" content="ansible,cloudflare,homelab,nginx">
+    <meta property="og:type" content="blog">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://github.com/mmas">
+<meta property="article:section" content="ansible">
+<meta property="article:tag" content="ansible,cloudflare,homelab,nginx">
+<meta property="article:published_time" content="2023-03-29">
+<meta property="article:modified_time" content="2023-03-29">
+
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        CommonHTML: {
+            scale: 93,
+            showMathMenu: false
+        },
+        tex2jax: {
+            "inlineMath": [["$","$"], ["\\(","\\)"]]
+        }
+    });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  </head>
+  <body class="entry-detail">
+
+    
+    <header>
+  <div>
+    <img src="https://mmas.github.io/images/profile.jpg">
+    <a class="brand" href="/">Modesto Mas</a>
+    <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+    <nav>
+      <ul>
+      <li><a href="/tags">Tags</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+    
+
+    <section id="content" role="main">
+    
+
+<article>
+  
+<header>
+  <h1><a href="/manage-nginx-sites-and-cloudflare-dns-with-ansible">Manage Nginx sites and Cloudflare DNS with Ansible</a></h1>
+  <time datetime="2023-03-29">Mar 29, 2023</time>
+  
+  <a class="tag" href="/tags?tag=ansible">ansible</a>
+  
+  <a class="tag" href="/tags?tag=cloudflare">cloudflare</a>
+  
+  <a class="tag" href="/tags?tag=homelab">homelab</a>
+  
+  <a class="tag" href="/tags?tag=nginx">nginx</a>
+  
+</header>
+
+  <section class="body">
+    <p>In this article, using Ansible, we will</p>
+<ul>
+<li>Install and configure Nginx</li>
+<li>Install and configure Certbot for Cloudflare</li>
+<li>Create Nginx sites</li>
+<li>Create DNS records in Cloudflare</li>
+<li>Update our WAN IP in Cloudflare</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Ansible</li>
+<li>An Ubuntu (or other Debian-based distro) host</li>
+<li>Package python3-pip installed in host</li>
+<li>A domain managed by Cloudflare</li>
+<li>A Clouflare API key</li>
+</ul>
+<p>The Cloudflare API key can be generated in <a target="_blank" href="https://dash.cloudflare.com/profile/api-tokens">My Profile / API
+Tokens</a>.</p>
+<p>The following variables are required in the playbook. It is
+recommended to store them <a target="_blank" href="https://www.redhat.com/sysadmin/ansible-playbooks-secrets">as
+secrets</a>.</p>
+<ul>
+<li><code>cloudflare_email</code></li>
+<li><code>cloudflare_api_key</code></li>
+<li><code>cloudflare_zone_id</code></li>
+<li><code>cloudflare_domains</code></li>
+</ul>
+<h2 id="installation-and-basic-configuration">Installation and basic
+configuration</h2>
+<p>Install Nginx and Certbot libraries:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a target="_blank" href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install nginx</span></span>
+<span id="cb1-2"><a target="_blank" href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">apt</span><span class="kw">:</span></span>
+<span id="cb1-3"><a target="_blank" href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span></span>
+<span id="cb1-4"><a target="_blank" href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> nginx</span></span>
+<span id="cb1-5"><a target="_blank" href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> nginx-extras</span></span>
+<span id="cb1-6"><a target="_blank" href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> certbot</span></span>
+<span id="cb1-7"><a target="_blank" href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> python3-certbot</span></span>
+<span id="cb1-8"><a target="_blank" href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> python3-acme</span></span>
+<span id="cb1-9"><a target="_blank" href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> python3-certbot-nginx</span></span>
+<span id="cb1-10"><a target="_blank" href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> python3-certbot-dns-cloudflare</span></span>
+<span id="cb1-11"><a target="_blank" href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> latest</span></span>
+<span id="cb1-12"><a target="_blank" href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
+<span id="cb1-13"><a target="_blank" href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart nginx</span></span></code></pre></div>
+<p>Copy the Nginx configuration:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a target="_blank" href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> copy nginx config</span></span>
+<span id="cb2-2"><a target="_blank" href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb2-3"><a target="_blank" href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> files/nginx/nginx.conf</span></span>
+<span id="cb2-4"><a target="_blank" href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /etc/nginx/nginx.conf</span></span>
+<span id="cb2-5"><a target="_blank" href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
+<span id="cb2-6"><a target="_blank" href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart nginx</span></span></code></pre></div>
+<p>Here’s an example of a configuration file (more information <a target="_blank" href="https://docs.nginx.com/nginx/admin-guide/basic-functionality/managing-configuration-files/">here</a>):</p>
+<pre><code>user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+include /etc/nginx/modules-enabled/*.conf;
+
+events {
+  worker_connections 768;
+}
+
+http {
+  sendfile on;
+  tcp_nopush on;
+  tcp_nodelay on;
+  keepalive_timeout 65;
+  types_hash_max_size 2048;
+
+  include /etc/nginx/mime.types;
+  default_type application/octet-stream;
+
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3; # Dropping SSLv3, ref: POODLE
+  ssl_prefer_server_ciphers on;
+
+  access_log /var/log/nginx/access.log;
+  error_log /var/log/nginx/error.log;
+
+  gzip on;
+
+  include /etc/nginx/conf.d/*.conf;
+  include /etc/nginx/sites-enabled/*;
+}</code></pre>
+<p>Changes on the previous two tasks will trigger the following handler
+to reload the Nginx service:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a target="_blank" href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">handlers</span><span class="kw">:</span></span>
+<span id="cb4-2"><a target="_blank" href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> restart nginx</span></span>
+<span id="cb4-3"><a target="_blank" href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">service</span><span class="kw">:</span></span>
+<span id="cb4-4"><a target="_blank" href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> nginx</span></span>
+<span id="cb4-5"><a target="_blank" href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> reloaded</span></span></code></pre></div>
+<p>Allow HTTPS traffic:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a target="_blank" href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow related and established connections</span></span>
+<span id="cb5-2"><a target="_blank" href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">iptables</span><span class="kw">:</span></span>
+<span id="cb5-3"><a target="_blank" href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">chain</span><span class="kw">:</span><span class="at"> INPUT</span></span>
+<span id="cb5-4"><a target="_blank" href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ctstate</span><span class="kw">:</span><span class="at"> ESTABLISHED,RELATED</span></span>
+<span id="cb5-5"><a target="_blank" href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">jump</span><span class="kw">:</span><span class="at"> ACCEPT</span></span>
+<span id="cb5-6"><a target="_blank" href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a target="_blank" href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow connections to port 443</span></span>
+<span id="cb5-8"><a target="_blank" href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">iptables</span><span class="kw">:</span></span>
+<span id="cb5-9"><a target="_blank" href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">chain</span><span class="kw">:</span><span class="at"> INPUT</span></span>
+<span id="cb5-10"><a target="_blank" href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">protocol</span><span class="kw">:</span><span class="at"> tcp</span></span>
+<span id="cb5-11"><a target="_blank" href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">destination_port</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;443&#39;</span></span>
+<span id="cb5-12"><a target="_blank" href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">jump</span><span class="kw">:</span><span class="at"> ACCEPT</span></span>
+<span id="cb5-13"><a target="_blank" href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a target="_blank" href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow port 443</span></span>
+<span id="cb5-15"><a target="_blank" href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ufw</span><span class="kw">:</span></span>
+<span id="cb5-16"><a target="_blank" href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">rule</span><span class="kw">:</span><span class="at"> allow</span></span>
+<span id="cb5-17"><a target="_blank" href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;443&#39;</span></span>
+<span id="cb5-18"><a target="_blank" href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">proto</span><span class="kw">:</span><span class="at"> tcp</span></span></code></pre></div>
+<h2 id="create-sites">Create sites</h2>
+<p>Only the enabled sites will be included in the configuration (in the
+previous config file: <code>include /etc/nginx/sites-enabled/*;</code>),
+but it is a good practice to define the sites in the
+<code>sites-available</code> folder and create symlinks to
+<code>sites-enabled</code> for the sites we want to include.</p>
+<p>With the following template, we can create different site
+configurations. By passing <code>domain</code> and
+<code>subdomain</code> it will create a config file for the
+<code>server_name</code> <code>&lt;subdomain&gt;.&lt;domain&gt;</code>,
+access and error logs with the subdomain as part of the file name, and
+will expect an SSL certificate at
+<code>/etc/letsencrypt/live/&lt;domain&gt;</code>. Both logs and
+certificates files can be overwritten by passing extra variables. You
+can also pass <code>local=yes</code> to allow site access from local
+network only and define a different router IP than the default
+<code>192.168.1.1</code>.</p>
+<pre><code>{% if router_ip is not defined %}
+{% set router_ip = &#39;192.168.1.1&#39; %}
+{% endif %}
+{% set local = item.local is defined and item.local %}
+{% if item.ssl_certificate is defined %}
+{% set ssl_certificate = item.ssl_certificate %}
+{% elif ssl_certificate is not defined %}
+{% set ssl_certificate = &#39;/etc/letsencrypt/live/&#39;+item.domain+&#39;/fullchain.pem&#39; %}
+{% endif %}
+{% if item.ssl_certificate_key is defined %}
+{% set ssl_certificate_key = item.ssl_certificate_key %}
+{% elif ssl_certificate_key is not defined %}
+{% set ssl_certificate_key = &#39;/etc/letsencrypt/live/&#39;+item.domain+&#39;/privkey.pem&#39; %}
+{% endif %}
+{% if item.access_log is defined %}
+{% set access_log = item.access_log %}
+{% elif access_log is not defined %}
+{% set access_log = &#39;/var/log/nginx/&#39;+item.subdomain+&#39;.access.log&#39; %}
+{% endif %}
+{% if item.error_log is defined %}
+{% set error_log = item.error_log %}
+{% elif error_log is not defined %}
+{% set error_log = &#39;/var/log/nginx/&#39;+item.subdomain+&#39;.error.log&#39; %}
+{% endif %}
+server {
+    listen 443 ssl;
+    server_name {{ item.subdomain }}.{{ item.domain }};
+
+    ssl_certificate {{ ssl_certificate }};
+    ssl_certificate_key {{ ssl_certificate_key }};
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+
+    access_log {{ access_log }};
+    error_log {{ error_log }};
+
+    location / {
+        {% if local %}allow {{ router_ip }};
+        deny all;
+        {% endif %}proxy_pass {{ item.proxy_pass }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection &quot;upgrade&quot;;
+        proxy_http_version 1.1;
+    }
+}</code></pre>
+<p>Using the template, let’s create a couple of sites in our domain
+mydomain.com: plex.mydomain.com and pihole.mydomain.com. Also, restrict
+pihole subdomain access to local network:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a target="_blank" href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create sites</span></span>
+<span id="cb7-2"><a target="_blank" href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb7-3"><a target="_blank" href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> files/nginx/site.jinja2</span></span>
+<span id="cb7-4"><a target="_blank" href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;/etc/nginx/sites-available/{{ item.subdomain }}.{{ item.domain }}&quot;</span></span>
+<span id="cb7-5"><a target="_blank" href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">loop</span><span class="kw">:</span></span>
+<span id="cb7-6"><a target="_blank" href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> mysite.com</span><span class="kw">,</span><span class="at"> </span><span class="fu">subdomain</span><span class="kw">:</span><span class="at"> plex</span><span class="kw">,</span><span class="at"> </span><span class="fu">proxy_pass</span><span class="kw">:</span><span class="at"> http://192.168.1.2:32400 </span><span class="kw">}</span></span>
+<span id="cb7-7"><a target="_blank" href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> mysite.com</span><span class="kw">,</span><span class="at"> </span><span class="fu">subdomain</span><span class="kw">:</span><span class="at"> pihole</span><span class="kw">,</span><span class="at"> </span><span class="fu">proxy_pass</span><span class="kw">:</span><span class="at"> http://192.168.1.3:8001</span><span class="kw">,</span><span class="at"> </span><span class="fu">local</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span><span class="at"> </span><span class="kw">}</span><span class="at">    </span></span>
+<span id="cb7-8"><a target="_blank" href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
+<span id="cb7-9"><a target="_blank" href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart nginx</span></span>
+<span id="cb7-10"><a target="_blank" href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a target="_blank" href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> enable sites</span></span>
+<span id="cb7-12"><a target="_blank" href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">file</span><span class="kw">:</span></span>
+<span id="cb7-13"><a target="_blank" href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;/etc/nginx/sites-available/{{ item.subdomain }}.{{ item.domain }}&quot;</span></span>
+<span id="cb7-14"><a target="_blank" href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;/etc/nginx/sites-enabled/{{ item.subdomain }}.{{ item.domain }}&quot;</span></span>
+<span id="cb7-15"><a target="_blank" href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> link</span></span>
+<span id="cb7-16"><a target="_blank" href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">loop</span><span class="kw">:</span><span class="at">    </span></span>
+<span id="cb7-17"><a target="_blank" href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> mysite.com</span><span class="kw">,</span><span class="at"> </span><span class="fu">subdomain</span><span class="kw">:</span><span class="at"> plex </span><span class="kw">}</span><span class="at">    </span></span>
+<span id="cb7-18"><a target="_blank" href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> mysite.com</span><span class="kw">,</span><span class="at"> </span><span class="fu">subdomain</span><span class="kw">:</span><span class="at"> pihole </span><span class="kw">}</span><span class="at">    </span></span>
+<span id="cb7-19"><a target="_blank" href="#cb7-19" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
+<span id="cb7-20"><a target="_blank" href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart nginx</span></span></code></pre></div>
+<h2 id="certificates">Certificates</h2>
+<p>To be able to generate Let’s Encrypt certificates using Certbot with
+the Cloudflare plugin we need to create a credentials file with our
+Cloudlfare email and API key:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create secrets folder</span></span>
+<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">file</span><span class="kw">:</span></span>
+<span id="cb8-3"><a target="_blank" href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /root/.secrets</span></span>
+<span id="cb8-4"><a target="_blank" href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> directory</span></span>
+<span id="cb8-5"><a target="_blank" href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;0700&#39;</span></span>
+<span id="cb8-6"><a target="_blank" href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a target="_blank" href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> copy cloudflare configuration</span></span>
+<span id="cb8-8"><a target="_blank" href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb8-9"><a target="_blank" href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /root/.secrets/cloudflare.ini</span></span>
+<span id="cb8-10"><a target="_blank" href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="fu">    content</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb8-11"><a target="_blank" href="#cb8-11" aria-hidden="true" tabindex="-1"></a>      dns_cloudflare_email = {{ cloudflare_email }}</span>
+<span id="cb8-12"><a target="_blank" href="#cb8-12" aria-hidden="true" tabindex="-1"></a>      dns_cloudflare_api_key = {{ cloudflare_api_key }}</span>
+<span id="cb8-13"><a target="_blank" href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;0400&#39;</span></span></code></pre></div>
+<p>Now, we can generate new certificates for *.mydomain from the host
+machine using the following command:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a target="_blank" href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ex">certbot</span> certonly <span class="dt">\</span></span>
+<span id="cb9-2"><a target="_blank" href="#cb9-2" aria-hidden="true" tabindex="-1"></a>--dns-cloudflare <span class="dt">\</span></span>
+<span id="cb9-3"><a target="_blank" href="#cb9-3" aria-hidden="true" tabindex="-1"></a>--dns-cloudflare-credentials /root/.secrets/cloudflare.ini <span class="dt">\</span></span>
+<span id="cb9-4"><a target="_blank" href="#cb9-4" aria-hidden="true" tabindex="-1"></a>-d <span class="pp">*</span>.mydomain.com <span class="dt">\</span></span>
+<span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a>--preferred-challenges dns-01</span></code></pre></div>
+<h2 id="create-subdomains-in-cloudflare">Create subdomains in
+Cloudflare</h2>
+<p>Following the example, create a non-proxied CNAME record for
+pihole.mydomain.com. Since we wanted to restrict the access to this
+subdomain to local network, this record needs to be non-proxied by
+Cloudflare. For global access, it’s a better option to proxy our
+subdomain.</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a target="_blank" href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create local subdomain dns records</span></span>
+<span id="cb10-2"><a target="_blank" href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cloudflare_dns</span><span class="kw">:</span></span>
+<span id="cb10-3"><a target="_blank" href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> mydomain.com</span></span>
+<span id="cb10-4"><a target="_blank" href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> pihole</span></span>
+<span id="cb10-5"><a target="_blank" href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">type</span><span class="kw">:</span><span class="at"> CNAME</span></span>
+<span id="cb10-6"><a target="_blank" href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> mydomain.com</span></span>
+<span id="cb10-7"><a target="_blank" href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">proxied</span><span class="kw">:</span><span class="at"> </span><span class="ch">no</span></span>
+<span id="cb10-8"><a target="_blank" href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">account_email</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ cloudflare_email }}&quot;</span></span>
+<span id="cb10-9"><a target="_blank" href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">account_api_key</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ cloudflare_api_key }}&quot;</span></span></code></pre></div>
+<h2 id="update-wan-ip-in-cloudflare">Update WAN IP in Cloudflare</h2>
+<p>If we have a dynamic IP, our WAN IP will change, so we need to keep
+it up to date in Cloudflare. We can use the following script to do it.
+Here, <code>cloudflare_domains</code> must be a list, so it can be
+<code>[ 'mydomain.com', '*.mydomain.com' ]</code>.</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a target="_blank" href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> requests</span>
+<span id="cb11-2"><a target="_blank" href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a target="_blank" href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a target="_blank" href="#cb11-4" aria-hidden="true" tabindex="-1"></a>ZONE_ID <span class="op">=</span> <span class="st">&#39;</span><span class="sc">{{</span><span class="st"> cloudflare_zone_id </span><span class="sc">}}</span><span class="st">&#39;</span></span>
+<span id="cb11-5"><a target="_blank" href="#cb11-5" aria-hidden="true" tabindex="-1"></a>CLOUDFLARE_URL <span class="op">=</span> <span class="op">\</span></span>
+<span id="cb11-6"><a target="_blank" href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    <span class="ss">f&#39;https://api.cloudflare.com/client/v4/zones/</span><span class="sc">{</span>ZONE_ID<span class="sc">}</span><span class="ss">/dns_records&#39;</span></span>
+<span id="cb11-7"><a target="_blank" href="#cb11-7" aria-hidden="true" tabindex="-1"></a>DOMAIN_NAMES <span class="op">=</span> [{<span class="op">%</span> <span class="cf">for</span> domain <span class="kw">in</span> cloudflare_domains <span class="op">%</span>}<span class="st">&#39;</span><span class="sc">{{</span><span class="st"> domain </span><span class="sc">}}</span><span class="st">&#39;</span>,{<span class="op">%</span> endfor<span class="op">%</span>}]</span>
+<span id="cb11-8"><a target="_blank" href="#cb11-8" aria-hidden="true" tabindex="-1"></a>USER_EMAIL <span class="op">=</span> <span class="st">&#39;</span><span class="sc">{{</span><span class="st"> cloudflare_email </span><span class="sc">}}</span><span class="st">&#39;</span></span>
+<span id="cb11-9"><a target="_blank" href="#cb11-9" aria-hidden="true" tabindex="-1"></a>USER_KEY <span class="op">=</span> <span class="st">&#39;</span><span class="sc">{{</span><span class="st"> cloudflare_api_key </span><span class="sc">}}</span><span class="st">&#39;</span></span>
+<span id="cb11-10"><a target="_blank" href="#cb11-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-11"><a target="_blank" href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a target="_blank" href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> update_domain_ip(domain_name, ip):</span>
+<span id="cb11-13"><a target="_blank" href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Get Cloudflare domain information.</span></span>
+<span id="cb11-14"><a target="_blank" href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    headers <span class="op">=</span> {<span class="st">&#39;X-Auth-Email&#39;</span>: USER_EMAIL, <span class="st">&#39;X-Auth-Key&#39;</span>: USER_KEY}</span>
+<span id="cb11-15"><a target="_blank" href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    response <span class="op">=</span> requests.get(CLOUDFLARE_URL,</span>
+<span id="cb11-16"><a target="_blank" href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                            {<span class="st">&#39;type&#39;</span>: <span class="st">&#39;A&#39;</span>, <span class="st">&#39;name&#39;</span>: domain_name},</span>
+<span id="cb11-17"><a target="_blank" href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                            headers<span class="op">=</span>headers)</span>
+<span id="cb11-18"><a target="_blank" href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    domain <span class="op">=</span> response.json()[<span class="st">&#39;result&#39;</span>][<span class="dv">0</span>]</span>
+<span id="cb11-19"><a target="_blank" href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> domain[<span class="st">&#39;content&#39;</span>] <span class="op">==</span> ip:</span>
+<span id="cb11-20"><a target="_blank" href="#cb11-20" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="st">&#39;Cloudflare already up to date.&#39;</span>)</span>
+<span id="cb11-21"><a target="_blank" href="#cb11-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb11-22"><a target="_blank" href="#cb11-22" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Update Cloudflare DNS.</span></span>
+<span id="cb11-23"><a target="_blank" href="#cb11-23" aria-hidden="true" tabindex="-1"></a>        response <span class="op">=</span> requests.put(<span class="ss">f&#39;</span><span class="sc">{</span>CLOUDFLARE_URL<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>domain[<span class="st">&quot;id&quot;</span>]<span class="sc">}</span><span class="ss">&#39;</span>,</span>
+<span id="cb11-24"><a target="_blank" href="#cb11-24" aria-hidden="true" tabindex="-1"></a>                                json<span class="op">=</span>{<span class="st">&#39;content&#39;</span>: ip,</span>
+<span id="cb11-25"><a target="_blank" href="#cb11-25" aria-hidden="true" tabindex="-1"></a>                                      <span class="st">&#39;type&#39;</span>: <span class="st">&#39;A&#39;</span>,</span>
+<span id="cb11-26"><a target="_blank" href="#cb11-26" aria-hidden="true" tabindex="-1"></a>                                      <span class="st">&#39;name&#39;</span>: domain_name},</span>
+<span id="cb11-27"><a target="_blank" href="#cb11-27" aria-hidden="true" tabindex="-1"></a>                                headers<span class="op">=</span>headers)</span>
+<span id="cb11-28"><a target="_blank" href="#cb11-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> response.ok:</span>
+<span id="cb11-29"><a target="_blank" href="#cb11-29" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="st">&#39;Cloudflare DNS updated&#39;</span>)</span>
+<span id="cb11-30"><a target="_blank" href="#cb11-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb11-31"><a target="_blank" href="#cb11-31" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(response.json()[<span class="st">&#39;errors&#39;</span>])</span>
+<span id="cb11-32"><a target="_blank" href="#cb11-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-33"><a target="_blank" href="#cb11-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-34"><a target="_blank" href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main():</span>
+<span id="cb11-35"><a target="_blank" href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Get WAN IP.</span></span>
+<span id="cb11-36"><a target="_blank" href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    wan_ip <span class="op">=</span> requests.get(<span class="st">&#39;http://icanhazip.com&#39;</span>).text.strip()</span>
+<span id="cb11-37"><a target="_blank" href="#cb11-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> domain_name <span class="kw">in</span> DOMAIN_NAMES:</span>
+<span id="cb11-38"><a target="_blank" href="#cb11-38" aria-hidden="true" tabindex="-1"></a>        update_domain_ip(domain_name, wan_ip)</span>
+<span id="cb11-39"><a target="_blank" href="#cb11-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-40"><a target="_blank" href="#cb11-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-41"><a target="_blank" href="#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&#39;__main__&#39;</span>:</span>
+<span id="cb11-42"><a target="_blank" href="#cb11-42" aria-hidden="true" tabindex="-1"></a>    main()</span></code></pre></div>
+<p>Now, we can schedule the execution of the script every 10
+minutes.</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a target="_blank" href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install requests</span></span>
+<span id="cb12-2"><a target="_blank" href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pip</span><span class="kw">:</span></span>
+<span id="cb12-3"><a target="_blank" href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> requests</span></span>
+<span id="cb12-4"><a target="_blank" href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a target="_blank" href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> copy script to update domain ip in cloudflare</span></span>
+<span id="cb12-6"><a target="_blank" href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb12-7"><a target="_blank" href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> files/nginx/update_cloudflare_dns.py.jinja2</span></span>
+<span id="cb12-8"><a target="_blank" href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> update_cloudflare_dns.py</span></span>
+<span id="cb12-9"><a target="_blank" href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a target="_blank" href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> setup cron job</span></span>
+<span id="cb12-11"><a target="_blank" href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cron</span><span class="kw">:</span></span>
+<span id="cb12-12"><a target="_blank" href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;update cloudflare dns&quot;</span></span>
+<span id="cb12-13"><a target="_blank" href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">minute</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;0,10,20,30,40,50&quot;</span></span>
+<span id="cb12-14"><a target="_blank" href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">job</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;python3 {{ ansible_user_dir }}/update_cloudflare_dns.py 2&gt;&amp;1 | logger -t {{ ansible_user_dir }}-cron&quot;</span></span></code></pre></div>
+  </section>
+</article>
+
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "https://mmas.github.io/manage-nginx-sites-and-cloudflare-dns-with-ansible";
+    this.page.identifier = "manage-nginx-sites-and-cloudflare-dns-with-ansible";
+  };
+  (function() {
+    var d = document, s = d.createElement('script');
+
+    s.src = '//mmast.disqus.com/embed.js';
+
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+
+    </section>
+    <footer></footer>
+    
+    
+  </body>
+</html>
