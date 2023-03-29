@@ -35,8 +35,9 @@ pre{margin:0;padding:10px 20px;overflow-x:auto}pre code{line-height:1.5}pre.stdo
 code .kw,code .ch{font-weight:500}
 code .co{color:#777;font-style:italic}
 code .st{font-style:italic}
-code.yaml .kw,code .ch{font-weight:400}
-code.yaml .co{color:#262626;font-style:normal;}
+code.yaml .kw{font-weight:400;color:#111}
+code.yaml .ch{font-weight:400}
+code.yaml .co{color:#262626;font-style:normal}
 code.yaml .st{font-style:normal}
 code.yaml .fu{font-weight:500}
 table{table-layout:auto;border-collapse:collapse;font-size:13px;margin:0 0 15px 20px;color:#222}
