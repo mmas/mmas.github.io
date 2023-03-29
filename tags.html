@@ -1,461 +1,801 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta property="og:site_name" content="Modesto Mas | Blog">
-<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
-<meta property="og:image:width" content="200">
-<meta property="og:image:height" content="200">
-<meta property="og:url" content="https://mmas.github.io/">
-<meta property="og:locale" content="en_GB">
-<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
-<meta name="twitter:url" content="https://mmas.github.io/">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:domain" content="mmas.github.io">
+  <head>
+    <title>Modesto Mas | numerical computing, python, julia, hadoop and more</title>
+    
+    <meta charset="utf-8">
+    <meta property="og:title" content="Modesto Mas | numerical computing, python, julia, hadoop and more">
+    <meta property="og:site_name" content="Modesto Mas | Blog">
+    <meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:url" content="https://mmas.github.io/tags">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta name="twitter:url" content="https://mmas.github.io/tags">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="mmas.github.io">
+    <meta name="twitter:title" content="Modesto Mas | numerical computing, python, julia, hadoop and more">
+    <meta name="description" content="Blog about programming and Math">
+    <meta name="twitter:description" content="Blog about programming and Math">
+    <meta property="og:description" content="Blog about programming and Math">
+    <meta name="keywords" content="Modesto Mas,programming,math,python,numpy,julia,numerical analysis,geometry,optimization">
+    <meta property="og:type" content="blog">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        CommonHTML: {
+            scale: 93,
+            showMathMenu: false
+        },
+        tex2jax: {
+            "inlineMath": [["$","$"], ["\\(","\\)"]]
+        }
+    });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  </head>
+  <body class="entry-list tags">
 
-
-<title>Modesto Mas | numerical computing, python, julia, hadoop and more</title>
-<meta name="twitter:title" content="Modesto Mas | numerical computing, python, julia, hadoop and more">
-<meta property="og:title" content="Modesto Mas | numerical computing, python, julia, hadoop and more">
-
-
-<meta name="description" content="Blog about programming and Math">
-<meta name="twitter:description" content="Blog about programming and Math">
-<meta property="og:description" content="Blog about programming and Math">
-
-<meta name="keywords" content="Modesto Mas,programming,math,python,numpy,julia,numerical analysis,geometry,optimization">
-<meta property="og:type" content="blog">
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="/css/main.css" type="text/css"/>
-
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-    CommonHTML: {
-        scale: 93,
-        showMathMenu: false
-    },
-    tex2jax: {
-        "inlineMath": [["$","$"], ["\\(","\\)"]]
-    }
-});
-</script>
-<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-</head>
-<body class="entry-list tags">
+    
     <header>
-    <div>
-        <img src="/images/profile.jpg">
-        <a class="brand" href="/">Modesto Mas</a>
-        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
-        <nav>
-            <ul>
-            <li><a href="/tags">Tags</a></li>
-            </ul>
-        </nav>
-    </div>
+  <div>
+    <img src="https://mmas.github.io/images/profile.jpg">
+    <a class="brand" href="/">Modesto Mas</a>
+    <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+    <nav>
+      <ul>
+      <li><a href="/tags">Tags</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>
+    
 
     <section id="content" role="main">
-
-    <div id="tag-filter">
-
-
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
-
-
-
-            <a class="tag" href="/tags?tag=data-processing">data-processing</a>
-
-
-
-            <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
-
-
-
-            <a class="tag" href="/tags?tag=geometry">geometry</a>
-
-
-
-            <a class="tag" href="/tags?tag=image-processing">image-processing</a>
-
-
-
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
-
-
-
-            <a class="tag" href="/tags?tag=optimization">optimization</a>
-
-
-
-            <a class="tag" href="/tags?tag=algebraic-geometry">algebraic-geometry</a>
-
-
-
-            <a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a>
-
-
-
-            <a class="tag" href="/tags?tag=interpolation">interpolation</a>
-
-
-
-            <a class="tag" href="/tags?tag=numerical-integration">numerical-integration</a>
-
-
-
-            <a class="tag" href="/tags?tag=root-finding">root-finding</a>
-
-
-
-            <a class="tag" href="/tags?tag=web-analytics">web-analytics</a>
-
-
-
-            <a class="tag" href="/tags?tag=python">python</a>
-
-
-
-            <a class="tag" href="/tags?tag=julia">julia</a>
-
-
-
-            <a class="tag" href="/tags?tag=cassandra">cassandra</a>
-
-
-
-            <a class="tag" href="/tags?tag=elasticsearch">elasticsearch</a>
-
-
-
-            <a class="tag" href="/tags?tag=hadoop">hadoop</a>
-
-
-
-            <a class="tag" href="/tags?tag=javascript">javascript</a>
-
-
-
-            <a class="tag" href="/tags?tag=mongodb">mongodb</a>
-
-
-
-            <a class="tag" href="/tags?tag=numpy">numpy</a>
-
-
-
-            <a class="tag" href="/tags?tag=scipy">scipy</a>
-
-
-
-            <a class="tag" href="/tags?tag=django">django</a>
-
-
-
-            <a class="tag" href="/tags?tag=flask">flask</a>
-
-
-
-            <a class="tag" href="/tags?tag=geoip">geoip</a>
-
-
-
-            <a class="tag" href="/tags?tag=hive">hive</a>
-
-
-
-            <a class="tag" href="/tags?tag=mapreduce">mapreduce</a>
-
-
-
-            <a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
-
-
-
-            <a class="tag" href="/tags?tag=multithreading">multithreading</a>
-
-
-
-            <a class="tag" href="/tags?tag=opencv">opencv</a>
-
-
-
-            <a class="tag" href="/tags?tag=painless">painless</a>
-
-
-
-            <a class="tag" href="/tags?tag=pandas">pandas</a>
-
-
-
-            <a class="tag" href="/tags?tag=pig">pig</a>
-
-
-
-            <a class="tag" href="/tags?tag=rabbitmq">rabbitmq</a>
-
-
-
-            <a class="tag" href="/tags?tag=scikit-image">scikit-image</a>
-
-
-
-            <a class="tag" href="/tags?tag=sqlalchemy">sqlalchemy</a>
-
-
-
-            <a class="tag" href="/tags?tag=tornado">tornado</a>
-
-
-    </div>
-
-    <article>
-        <header>
-            <h1><a href="/sort-date-proximity-elasticsearch-script">Sorting by date proximity in Elasticsearch</a></h1>
-            <time datetime="2017-07-10">jul 10, 2017</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=elasticsearch">elasticsearch</a> <a class="tag" href="/tags?tag=painless">painless</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/services-python-threads-tornado-rabbitmq">Running services in Python as threads: Tornado server and RabbitMQ client</a></h1>
-            <time datetime="2017-07-07">jul 07, 2017</time>
-            <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=multithreading">multithreading</a> <a class="tag" href="/tags?tag=rabbitmq">rabbitmq</a> <a class="tag" href="/tags?tag=tornado">tornado</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/image-affine-mapping-numpy">Image affine mapping in Numpy</a></h1>
-            <time datetime="2016-08-18">aug 18, 2016</time>
-            <a class="tag" href="/tags?tag=geometry">geometry</a> <a class="tag" href="/tags?tag=image-processing">image-processing</a> <a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/pageviews-flask-cassandra">Collect pageviews with Flask and Cassandra</a></h1>
-            <time datetime="2016-07-10">jul 10, 2016</time>
-            <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a> <a class="tag" href="/tags?tag=web-analytics">web-analytics</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=cassandra">cassandra</a> <a class="tag" href="/tags?tag=flask">flask</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/brent-julia">Brent&#39;s method in Julia</a></h1>
-            <time datetime="2016-06-29">jun 29, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/inverse-quadratic-interpolation-julia">Inverse quadratic interpolation in Julia</a></h1>
-            <time datetime="2016-06-27">jun 27, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/ridders-julia">Ridders&#39; method in Julia</a></h1>
-            <time datetime="2016-06-24">jun 24, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/regula-falsi-julia">Regula falsi method in Julia</a></h1>
-            <time datetime="2016-06-21">jun 21, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/secant-julia">Secant method in Julia</a></h1>
-            <time datetime="2016-06-20">jun 20, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/mongodb-seconds-to-minutes">Convert seconds to minutes in MongoDB</a></h1>
-            <time datetime="2016-06-14">jun 14, 2016</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a> <a class="tag" href="/tags?tag=mongodb">mongodb</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/linear-transformations-numpy">Linear transformations in Numpy</a></h1>
-            <time datetime="2016-06-11">jun 11, 2016</time>
-            <a class="tag" href="/tags?tag=geometry">geometry</a> <a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a> <a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/newton-julia">Newton-Raphson method in Julia</a></h1>
-            <time datetime="2016-04-26">apr 26, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/conics-matplotlib">Drawing conics in Matplotlib</a></h1>
-            <time datetime="2016-04-21">apr 21, 2016</time>
-            <a class="tag" href="/tags?tag=geometry">geometry</a> <a class="tag" href="/tags?tag=algebraic-geometry">algebraic-geometry</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a> <a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/bisection-method-julia">Bisection method in Julia</a></h1>
-            <time datetime="2016-04-18">apr 18, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=root-finding">root-finding</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/simpson-integration-julia">Simpson&#39;s rule in Julia</a></h1>
-            <time datetime="2016-04-15">apr 15, 2016</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=numerical-integration">numerical-integration</a> <a class="tag" href="/tags?tag=julia">julia</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/sqlalchemy-serialize-json">SQLAlchemy JSON serialization</a></h1>
-            <time datetime="2015-11-26">nov 26, 2015</time>
-            <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=flask">flask</a> <a class="tag" href="/tags?tag=sqlalchemy">sqlalchemy</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/analyze-apache-access-log-pandas">Analyze Apache HTTP server access log with Pandas</a></h1>
-            <time datetime="2015-11-23">nov 23, 2015</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=pandas">pandas</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/read-apache-access-log-pandas">Read Apache HTTP server access log with Pandas</a></h1>
-            <time datetime="2015-11-15">nov 15, 2015</time>
-            <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=pandas">pandas</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/least-squares-fitting-numpy-scipy">Least squares fitting with Numpy and Scipy</a></h1>
-            <time datetime="2015-11-11">nov 11, 2015</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=optimization">optimization</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a> <a class="tag" href="/tags?tag=scipy">scipy</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/optimization-scipy">Optimization methods in Scipy</a></h1>
-            <time datetime="2015-11-07">nov 07, 2015</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=optimization">optimization</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a> <a class="tag" href="/tags?tag=scipy">scipy</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/interpolation-scipy">Interpolation methods in Scipy</a></h1>
-            <time datetime="2015-10-28">oct 28, 2015</time>
-            <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a> <a class="tag" href="/tags?tag=interpolation">interpolation</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a> <a class="tag" href="/tags?tag=scipy">scipy</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/querying-hive">Querying in Hive</a></h1>
-            <time datetime="2015-10-21">oct 21, 2015</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a> <a class="tag" href="/tags?tag=hadoop">hadoop</a> <a class="tag" href="/tags?tag=hive">hive</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/loading-data-hive">Loading data into Hive</a></h1>
-            <time datetime="2015-10-15">oct 15, 2015</time>
-            <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a> <a class="tag" href="/tags?tag=hadoop">hadoop</a> <a class="tag" href="/tags?tag=hive">hive</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/data-analyisis-apache-hive-practical-introduction">Data analysis with Apache Hive. A practical introduction</a></h1>
-            <time datetime="2015-10-02">oct 02, 2015</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a> <a class="tag" href="/tags?tag=hadoop">hadoop</a> <a class="tag" href="/tags?tag=hive">hive</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/data-analysis-apache-pig-practical-introduction">Data analysis with Apache Pig. A practical introduction</a></h1>
-            <time datetime="2015-09-12">sep 12, 2015</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=hadoop">hadoop</a> <a class="tag" href="/tags?tag=pig">pig</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/hadoop-streaming-practical-introduction-mapreduce-python">Hadoop Streaming. Practical introduction to MapReduce with Python</a></h1>
-            <time datetime="2015-09-11">sep 11, 2015</time>
-            <a class="tag" href="/tags?tag=data-processing">data-processing</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=hadoop">hadoop</a> <a class="tag" href="/tags?tag=mapreduce">mapreduce</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/freelance-invoices-manager">Freelance invoices manager</a></h1>
-            <time datetime="2015-03-10">mar 10, 2015</time>
-            <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=django">django</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/python-image-processing-libraries-performance-opencv-scipy-scikit-image">Python image processing libraries performance: OpenCV vs Scipy vs Scikit-Image</a></h1>
-            <time datetime="2015-02-16">feb 16, 2015</time>
-            <a class="tag" href="/tags?tag=image-processing">image-processing</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=numpy">numpy</a> <a class="tag" href="/tags?tag=scipy">scipy</a> <a class="tag" href="/tags?tag=opencv">opencv</a> <a class="tag" href="/tags?tag=scikit-image">scikit-image</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/simple-web-analytics-python-pandas">Simple web analytics with Python and Pandas</a></h1>
-            <time datetime="2015-02-13">feb 13, 2015</time>
-            <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=web-analytics">web-analytics</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=pandas">pandas</a>
-        </header>
-    </article>
-
-    <article>
-        <header>
-            <h1><a href="/web-visits-data-analytics-javascript-python--geoip">Getting web visits data for analytics with Javascript, Python and GeoIP</a></h1>
-            <time datetime="2015-02-11">feb 11, 2015</time>
-            <a class="tag" href="/tags?tag=data-processing">data-processing</a> <a class="tag" href="/tags?tag=web-analytics">web-analytics</a> <a class="tag" href="/tags?tag=python">python</a> <a class="tag" href="/tags?tag=javascript">javascript</a> <a class="tag" href="/tags?tag=geoip">geoip</a>
-        </header>
-    </article>
-
-
-</section>
+    
+<div id="tag-filter">
+  
+  
+<a class="tag" href="/tags?tag=algebraic-geometry">algebraic-geometry</a>
+
+  
+  
+<a class="tag" href="/tags?tag=cassandra">cassandra</a>
+
+  
+  
+<a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+
+  
+  
+<a class="tag" href="/tags?tag=data-processing">data-processing</a>
+
+  
+  
+<a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+
+  
+  
+<a class="tag" href="/tags?tag=django">django</a>
+
+  
+  
+<a class="tag" href="/tags?tag=elasticsearch">elasticsearch</a>
+
+  
+  
+<a class="tag" href="/tags?tag=flask">flask</a>
+
+  
+  
+<a class="tag" href="/tags?tag=geoip">geoip</a>
+
+  
+  
+<a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a>
+
+  
+  
+<a class="tag" href="/tags?tag=geometry">geometry</a>
+
+  
+  
+<a class="tag" href="/tags?tag=hadoop">hadoop</a>
+
+  
+  
+<a class="tag" href="/tags?tag=hive">hive</a>
+
+  
+  
+<a class="tag" href="/tags?tag=image-processing">image-processing</a>
+
+  
+  
+<a class="tag" href="/tags?tag=interpolation">interpolation</a>
+
+  
+  
+<a class="tag" href="/tags?tag=javascript">javascript</a>
+
+  
+  
+<a class="tag" href="/tags?tag=julia">julia</a>
+
+  
+  
+<a class="tag" href="/tags?tag=mapreduce">mapreduce</a>
+
+  
+  
+<a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
+
+  
+  
+<a class="tag" href="/tags?tag=mongodb">mongodb</a>
+
+  
+  
+<a class="tag" href="/tags?tag=multithreading">multithreading</a>
+
+  
+  
+<a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+
+  
+  
+<a class="tag" href="/tags?tag=numerical-integration">numerical-integration</a>
+
+  
+  
+<a class="tag" href="/tags?tag=numpy">numpy</a>
+
+  
+  
+<a class="tag" href="/tags?tag=opencv">opencv</a>
+
+  
+  
+<a class="tag" href="/tags?tag=optimization">optimization</a>
+
+  
+  
+<a class="tag" href="/tags?tag=painless">painless</a>
+
+  
+  
+<a class="tag" href="/tags?tag=pandas">pandas</a>
+
+  
+  
+<a class="tag" href="/tags?tag=pig">pig</a>
+
+  
+  
+<a class="tag" href="/tags?tag=python">python</a>
+
+  
+  
+<a class="tag" href="/tags?tag=rabbitmq">rabbitmq</a>
+
+  
+  
+<a class="tag" href="/tags?tag=root-finding">root-finding</a>
+
+  
+  
+<a class="tag" href="/tags?tag=scikit-image">scikit-image</a>
+
+  
+  
+<a class="tag" href="/tags?tag=scipy">scipy</a>
+
+  
+  
+<a class="tag" href="/tags?tag=sqlalchemy">sqlalchemy</a>
+
+  
+  
+<a class="tag" href="/tags?tag=tornado">tornado</a>
+
+  
+  
+<a class="tag" href="/tags?tag=web-analytics">web-analytics</a>
+
+  
+</div>
+
+
+<article>
+  
+<header>
+  <h1><a href="/sort-date-proximity-elasticsearch-script">Sorting by date proximity in Elasticsearch</a></h1>
+  <time datetime="2017-07-10">Jul 10, 2017</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=elasticsearch">elasticsearch</a>
+  
+  <a class="tag" href="/tags?tag=painless">painless</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/services-python-threads-tornado-rabbitmq">Running services in Python as threads: Tornado server and RabbitMQ client</a></h1>
+  <time datetime="2017-07-07">Jul 07, 2017</time>
+  
+  <a class="tag" href="/tags?tag=multithreading">multithreading</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=rabbitmq">rabbitmq</a>
+  
+  <a class="tag" href="/tags?tag=tornado">tornado</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/image-affine-mapping-numpy">Image affine mapping in Numpy</a></h1>
+  <time datetime="2016-08-18">Aug 18, 2016</time>
+  
+  <a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a>
+  
+  <a class="tag" href="/tags?tag=geometry">geometry</a>
+  
+  <a class="tag" href="/tags?tag=image-processing">image-processing</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/pageviews-flask-cassandra">Collect pageviews with Flask and Cassandra</a></h1>
+  <time datetime="2016-07-10">Jul 10, 2016</time>
+  
+  <a class="tag" href="/tags?tag=cassandra">cassandra</a>
+  
+  <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+  
+  <a class="tag" href="/tags?tag=flask">flask</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=web-analytics">web-analytics</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/brent-julia">Brent&#39;s method in Julia</a></h1>
+  <time datetime="2016-06-29">Jun 29, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/inverse-quadratic-interpolation-julia">Inverse quadratic interpolation in Julia</a></h1>
+  <time datetime="2016-06-27">Jun 27, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/ridders-julia">Ridders&#39; method in Julia</a></h1>
+  <time datetime="2016-06-24">Jun 24, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/regula-falsi-julia">Regula falsi method in Julia</a></h1>
+  <time datetime="2016-06-21">Jun 21, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/secant-julia">Secant method in Julia</a></h1>
+  <time datetime="2016-06-20">Jun 20, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/mongodb-seconds-to-minutes">Convert seconds to minutes in MongoDB</a></h1>
+  <time datetime="2016-06-14">Jun 14, 2016</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+  
+  <a class="tag" href="/tags?tag=mongodb">mongodb</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/linear-transformations-numpy">Linear transformations in Numpy</a></h1>
+  <time datetime="2016-06-11">Jun 11, 2016</time>
+  
+  <a class="tag" href="/tags?tag=geometric-transformations">geometric-transformations</a>
+  
+  <a class="tag" href="/tags?tag=geometry">geometry</a>
+  
+  <a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/newton-julia">Newton-Raphson method in Julia</a></h1>
+  <time datetime="2016-04-26">Apr 26, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/conics-matplotlib">Drawing conics in Matplotlib</a></h1>
+  <time datetime="2016-04-21">Apr 21, 2016</time>
+  
+  <a class="tag" href="/tags?tag=algebraic-geometry">algebraic-geometry</a>
+  
+  <a class="tag" href="/tags?tag=geometry">geometry</a>
+  
+  <a class="tag" href="/tags?tag=matplotlib">matplotlib</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/bisection-method-julia">Bisection method in Julia</a></h1>
+  <time datetime="2016-04-18">Apr 18, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=root-finding">root-finding</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/simpson-integration-julia">Simpson&amp;#39;s rule in Julia</a></h1>
+  <time datetime="2016-04-15">Apr 15, 2016</time>
+  
+  <a class="tag" href="/tags?tag=julia">julia</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=numerical-integration">numerical-integration</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/sqlalchemy-serialize-json">SQLAlchemy JSON serialization</a></h1>
+  <time datetime="2015-11-26">Nov 26, 2015</time>
+  
+  <a class="tag" href="/tags?tag=flask">flask</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=sqlalchemy">sqlalchemy</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/analyze-apache-access-log-pandas">Analyze Apache HTTP server access log with Pandas</a></h1>
+  <time datetime="2015-11-23">Nov 23, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=pandas">pandas</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/read-apache-access-log-pandas">Read Apache HTTP server access log with Pandas</a></h1>
+  <time datetime="2015-11-15">Nov 15, 2015</time>
+  
+  <a class="tag" href="/tags?tag=pandas">pandas</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/least-squares-fitting-numpy-scipy">Least squares fitting with Numpy and Scipy</a></h1>
+  <time datetime="2015-11-11">Nov 11, 2015</time>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=optimization">optimization</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=scipy">scipy</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/optimization-scipy">Optimization methods in Scipy</a></h1>
+  <time datetime="2015-11-07">Nov 07, 2015</time>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=optimization">optimization</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=scipy">scipy</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/interpolation-scipy">Interpolation methods in Scipy</a></h1>
+  <time datetime="2015-10-28">Oct 28, 2015</time>
+  
+  <a class="tag" href="/tags?tag=interpolation">interpolation</a>
+  
+  <a class="tag" href="/tags?tag=numerical-analysis">numerical-analysis</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=scipy">scipy</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/querying-hive">Querying in Hive</a></h1>
+  <time datetime="2015-10-21">Oct 21, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+  
+  <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+  
+  <a class="tag" href="/tags?tag=hive">hive</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/loading-data-hive">Loading data into Hive</a></h1>
+  <time datetime="2015-10-15">Oct 15, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+  
+  <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+  
+  <a class="tag" href="/tags?tag=hive">hive</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/data-analyisis-apache-hive-practical-introduction">Data analysis with Apache Hive. A practical introduction</a></h1>
+  <time datetime="2015-10-02">Oct 02, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+  
+  <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+  
+  <a class="tag" href="/tags?tag=hive">hive</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/data-analysis-apache-pig-practical-introduction">Data analysis with Apache Pig. A practical introduction</a></h1>
+  <time datetime="2015-09-12">Sep 12, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+  
+  <a class="tag" href="/tags?tag=pig">pig</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/hadoop-streaming-practical-introduction-mapreduce-python">Hadoop Streaming. Practical introduction to MapReduce with Python</a></h1>
+  <time datetime="2015-09-11">Sep 11, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-processing">data-processing</a>
+  
+  <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+  
+  <a class="tag" href="/tags?tag=mapreduce">mapreduce</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/freelance-invoices-manager">Freelance invoices manager</a></h1>
+  <time datetime="2015-03-10">Mar 10, 2015</time>
+  
+  <a class="tag" href="/tags?tag=django">django</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/python-image-processing-libraries-performance-opencv-scipy-scikit-image">Python image processing libraries performance: OpenCV vs Scipy vs Scikit-Image</a></h1>
+  <time datetime="2015-02-16">Feb 16, 2015</time>
+  
+  <a class="tag" href="/tags?tag=image-processing">image-processing</a>
+  
+  <a class="tag" href="/tags?tag=numpy">numpy</a>
+  
+  <a class="tag" href="/tags?tag=opencv">opencv</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=scikit-image">scikit-image</a>
+  
+  <a class="tag" href="/tags?tag=scipy">scipy</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/simple-web-analytics-python-pandas">Simple web analytics with Python and Pandas</a></h1>
+  <time datetime="2015-02-13">Feb 13, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=pandas">pandas</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=web-analytics">web-analytics</a>
+  
+</header>
+
+</article>
+
+
+
+<article>
+  
+<header>
+  <h1><a href="/web-visits-data-analytics-javascript-python--geoip">Getting web visits data for analytics with Javascript, Python and GeoIP</a></h1>
+  <time datetime="2015-02-11">Feb 11, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-processing">data-processing</a>
+  
+  <a class="tag" href="/tags?tag=geoip">geoip</a>
+  
+  <a class="tag" href="/tags?tag=javascript">javascript</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=web-analytics">web-analytics</a>
+  
+</header>
+
+</article>
+
+
+
+    </section>
     <footer></footer>
-
-
+    
 <script>
   var match = /tag=([\w-]+)/.exec(window.location.search.substring(1));
   if (match[1]) {
@@ -480,5 +820,5 @@ MathJax.Hub.Config({
   }
 </script>
 
-</body>
+  </body>
 </html>

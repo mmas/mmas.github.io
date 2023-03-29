@@ -1,75 +1,88 @@
-
 <!DOCTYPE html>
 <html lang="en" itemscope itemtype="http://schema.org/Article">
-<head>
-<meta charset="utf-8">
-<meta property="og:site_name" content="Modesto Mas | Blog">
-<meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
-<meta property="og:image:width" content="200">
-<meta property="og:image:height" content="200">
-<meta property="og:url" content="https://mmas.github.io/data-analyisis-apache-hive-practical-introduction">
-<meta property="og:locale" content="en_GB">
-<meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
-<meta name="twitter:url" content="https://mmas.github.io/data-analyisis-apache-hive-practical-introduction">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:domain" content="mmas.github.io">
+  <head>
+    <title>Data analysis with Apache Hive. A practical introduction</title>
+    
 
-<title>Data analysis with Apache Hive. A practical introduction</title>
-<meta name="twitter:title" content="Data analysis with Apache Hive. A practical introduction">
-<meta property="og:title" content="Data analysis with Apache Hive. A practical introduction">
-
-<meta name="description" content="Apache Hive is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL....">
-<meta name="twitter:description" content="Apache Hive is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL....">
-<meta property="og:description" content="Apache Hive is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL....">
-
-<meta name="keywords" content="data-analysis,data-warehousing,hadoop,hive">
+    <meta charset="utf-8">
+    <meta property="og:title" content="Data analysis with Apache Hive. A practical introduction">
+    <meta property="og:site_name" content="Modesto Mas | Blog">
+    <meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:url" content="https://mmas.github.io/data-analyisis-apache-hive-practical-introduction">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta name="twitter:url" content="https://mmas.github.io/data-analyisis-apache-hive-practical-introduction">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="mmas.github.io">
+    <meta name="twitter:title" content="Data analysis with Apache Hive. A practical introduction">
+    <meta name="description" content="Apache Hive is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL. Th...">
+    <meta name="twitter:description" content="Apache Hive is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL. Th...">
+    <meta property="og:description" content="Apache Hive is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL. Th...">
+    <meta name="keywords" content="data-analysis,data-warehousing,hadoop,hive">
+    <meta property="og:type" content="blog">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
 <meta property="og:type" content="article">
-<meta property="article:author" content="https://mmas.github.io/about">
+<meta property="article:author" content="https://github.com/mmas">
 <meta property="article:section" content="data-analysis">
 <meta property="article:tag" content="data-analysis,data-warehousing,hadoop,hive">
 <meta property="article:published_time" content="2015-10-02">
 <meta property="article:modified_time" content="2015-10-02">
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="/css/main.css" type="text/css"/>
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        CommonHTML: {
+            scale: 93,
+            showMathMenu: false
+        },
+        tex2jax: {
+            "inlineMath": [["$","$"], ["\\(","\\)"]]
+        }
+    });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  </head>
+  <body class="entry-detail">
 
-
-<script type="text/x-mathjax-config">
-MathJax.Hub.Config({
-    CommonHTML: {
-        scale: 93,
-        showMathMenu: false
-    },
-    tex2jax: {
-        "inlineMath": [["$","$"], ["\\(","\\)"]]
-    }
-});
-</script>
-<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
-</head>
-<body class="entry-detail">
+    
     <header>
-    <div>
-        <img src="/images/profile.jpg">
-        <a class="brand" href="/">Modesto Mas</a>
-        <span>Numerical Computing, Python, Julia, Hadoop and more</span>
-        <nav>
-            <ul>
-            <li><a href="/tags">Tags</a></li>
-            </ul>
-        </nav>
-    </div>
+  <div>
+    <img src="https://mmas.github.io/images/profile.jpg">
+    <a class="brand" href="/">Modesto Mas</a>
+    <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+    <nav>
+      <ul>
+      <li><a href="/tags">Tags</a></li>
+      </ul>
+    </nav>
+  </div>
 </header>
+    
 
     <section id="content" role="main">
+    
+
 <article>
-    <header>
-        <h1>Data analysis with Apache Hive. A practical introduction</h1>
-        <time datetime="2015-10-02">oct 02, 2015</time>
-        <a class="tag" href="/tags?tag=data-analysis">data-analysis</a> <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a> <a class="tag" href="/tags?tag=hadoop">hadoop</a> <a class="tag" href="/tags?tag=hive">hive</a>
-    </header>
-    <section class="body">
-        <p><a target="_blank" href="http://hive.apache.org/">Apache Hive</a> is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL. </p>
+  
+<header>
+  <h1><a href="/data-analyisis-apache-hive-practical-introduction">Data analysis with Apache Hive. A practical introduction</a></h1>
+  <time datetime="2015-10-02">Oct 02, 2015</time>
+  
+  <a class="tag" href="/tags?tag=data-analysis">data-analysis</a>
+  
+  <a class="tag" href="/tags?tag=data-warehousing">data-warehousing</a>
+  
+  <a class="tag" href="/tags?tag=hadoop">hadoop</a>
+  
+  <a class="tag" href="/tags?tag=hive">hive</a>
+  
+</header>
+
+  <section class="body">
+    <p><a target="_blank" href="http://hive.apache.org/">Apache Hive</a> is a framework for data warehousing for manage large datasets. Hive can be used for data analysis in a SQL-like language called HiveQL. </p>
 <p>The following examples are done using the hourly precipitations dataset from NCDC for May of 1998 and the weather stations description file, both can be downloaded from <a target="_blank" href="http://www.ncdc.noaa.gov/orders/qclcd/">http://www.ncdc.noaa.gov/orders/qclcd/</a>.</p>
 <h2>Loading data</h2>
 <p>Load CSV data (hourly precipitations records):</p>
@@ -140,28 +153,13 @@ ON (records.wban = stations.wban);
 03026   BURLINGTON  CO  2.8499999884516
 [...]
 </code></pre>
-    </section>
+  </section>
 </article>
-<div id="disqus_thread"></div>
-<script>
-    var disqus_config = function () {
-        this.page.url = "https://mmas.github.io/data-analyisis-apache-hive-practical-introduction";
-        this.page.identifier = "data-analyisis-apache-hive-practical-introduction";
-    };
-    (function() {
-        var d = document, s = d.createElement('script');
 
-        s.src = '//mmast.disqus.com/embed.js';
 
-        s.setAttribute('data-timestamp', +new Date());
-        (d.head || d.body).appendChild(s);
-    })();
-</script>
-<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
-</section>
-
-<footer></footer>
-<script id="dsq-count-scr" src="//mastortosacom.disqus.com/count.js" async></script>
-
-</body>
+    </section>
+    <footer></footer>
+    
+    
+  </body>
 </html>
