@@ -1,3 +1,11 @@
+:root {
+  --blue: #333380;
+  --red: #aa2121;
+  --green: #035503;
+  --orange: #c13300;
+  --purple: #5d5eb1;
+  --grey: #777;
+}
 @import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500,400|Roboto+Condensed|Roboto:400,400italic');
 *{box-sizing:border-box;border-color:#aaa;cursor:default}
 html{padding:0;margin:0;color:#090909;background-color:#f6f6f6;font-family:'Roboto',sans-serif;font-size:15px;font-weight:400;position:relative}html ::-webkit-scrollbar{width:0;height:0}
@@ -32,14 +40,109 @@ math{font-size:17px;color:#111}math[display="block"]{margin-bottom:15px}
 #tag-filter{padding:0 20px}#tag-filter a.tag{opacity:.3}#tag-filter a.tag:hover{opacity:1}#tag-filter a.tag.active{opacity:1}
 pre,code{background-color:#F6F6F6;color:#262626;font-family:'Roboto Mono',monospace;font-size:14px;font-weight:400}
 pre{margin:0;padding:10px 20px;overflow-x:auto}pre code{line-height:1.5}pre.stdout{color:#666;}pre code.stdout{color:#666;}
-code .kw,code .ch, code .im{font-weight:500}
-code .co{color:#777;font-style:italic}
-code .st{font-style:italic}
-code.yaml .kw{font-weight:400;color:#111}
-code.yaml .ch{font-weight:400}
-code.yaml .co{color:#262626;font-style:normal}
-code.yaml .st{font-style:normal}
-code.yaml .fu{font-weight:500}
+
+code .cf {
+    color: var(--blue);
+}
+code .kw {
+    color: var(--orange);
+}
+code .bu {
+    color: var(--green);
+}
+code .fu {
+    color: var(--red);
+}
+code .at {
+    color: var(--purple);
+}
+code.python .co {
+    color: var(--grey);
+    font-style:italic;
+}
+/* built-in functions */
+code.python .bu {
+    color: var(--blue);
+}
+/* for, in, as... */
+code.python .cf {
+    color: var(--red)
+}
+/* import, from, as */
+code.python .im {
+    font-weight: 500;
+    color: var(--orange);
+}
+/* class, def, in, and, not... */
+code.python .kw {
+    color: var(--green);
+    font-weight: 500;
+}
+/* +, -, =... */
+code.python .op {
+    color: var(--red);
+}
+code.python .st {
+    font-style: italic;
+}
+/* self, None... */
+code.python .va {
+    color: var(--purple);
+}
+/* bool  */
+code.yaml .ch {
+    color: var(--orange);
+}
+/* comment */
+code.yaml .co {
+    color: var(--grey);
+    font-style: italic;
+}
+code.yaml .at,
+code.yaml .st {
+    color: #090909;
+}
+/* keys */
+code.yaml .fu {
+    font-weight: 500;
+    color: var(--blue);
+}
+/* echo, set... */
+code.bash .co {
+    color: var(--grey);
+    font-style: italic;
+}
+/* set, echo... */
+code.bash .bu {
+    font-weight: 500;
+    color: var(--blue);
+}
+/* for, while, do... */
+code.bash .cf {
+    color: var(--orange);
+    font-weight: 500;
+}
+/* sudo, cp, mktemp...  */
+code.bash .fu {
+    color: var(--green);
+}
+code.bash .st {
+
+}
+code.bash .va {
+    color: var(--red);
+}
+/* query  */
+code.css .fu {
+    color: var(--orange);
+}
+/* name  */
+code.css .kw {
+    color: var(--blue);
+}
+code.html .er {
+    color: var(--blue);
+}
 table{table-layout:auto;border-collapse:collapse;font-size:13px;margin:0 0 15px 20px;color:#222}
 table td,
 table th{border:solid 1px #cecece;padding:5px 10px 6px;white-space:nowrap}
