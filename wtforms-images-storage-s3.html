@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+  <head>
+    <title>WTForms with images in data-storage services</title>
+    
+
+    <meta charset="utf-8">
+    <meta property="og:title" content="WTForms with images in data-storage services">
+    <meta property="og:site_name" content="Modesto Mas | Blog">
+    <meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:url" content="https://mmas.github.io/wtforms-images-storage-s3">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta name="twitter:url" content="https://mmas.github.io/wtforms-images-storage-s3">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="mmas.github.io">
+    <meta name="twitter:title" content="WTForms with images in data-storage services">
+    <meta name="description" content="In this article we will extend WTForms to create form with images stored in a data-storage service, such as AWS S3, GCP Storage or Azure Storage. Prer...">
+    <meta name="twitter:description" content="In this article we will extend WTForms to create form with images stored in a data-storage service, such as AWS S3, GCP Storage or Azure Storage. Prer...">
+    <meta property="og:description" content="In this article we will extend WTForms to create form with images stored in a data-storage service, such as AWS S3, GCP Storage or Azure Storage. Prer...">
+    <meta name="keywords" content="flask,python,sqlalchemy,wtforms">
+    <meta property="og:type" content="blog">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://github.com/mmas">
+<meta property="article:section" content="flask">
+<meta property="article:tag" content="flask,python,sqlalchemy,wtforms">
+<meta property="article:published_time" content="2023-03-31">
+<meta property="article:modified_time" content="2023-03-31">
+
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        CommonHTML: {
+            scale: 93,
+            showMathMenu: false
+        },
+        tex2jax: {
+            "inlineMath": [["$","$"], ["\\(","\\)"]]
+        }
+    });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  </head>
+  <body class="entry-detail">
+
+    
+    <header>
+  <div>
+    <img src="https://mmas.github.io/images/profile.jpg">
+    <a class="brand" href="/">Modesto Mas</a>
+    <span>Numerical Computing, Python, Julia, Hadoop and more</span>
+    <nav>
+      <ul>
+      <li><a href="/tags">Tags</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+    
+
+    <section id="content" role="main">
+    
+
+<article>
+  
+<header>
+  <h1><a href="/wtforms-images-storage-s3">WTForms with images in data-storage services</a></h1>
+  <time datetime="2023-03-31">Mar 31, 2023</time>
+  
+  <a class="tag" href="/tags?tag=flask">flask</a>
+  
+  <a class="tag" href="/tags?tag=python">python</a>
+  
+  <a class="tag" href="/tags?tag=sqlalchemy">sqlalchemy</a>
+  
+  <a class="tag" href="/tags?tag=wtforms">wtforms</a>
+  
+</header>
+
+  <section class="body">
+    <p>In this article we will extend WTForms to create form with images
+stored in a data-storage service, such as AWS S3, GCP Storage or Azure
+Storage.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>In this example we will use <code>Flask</code>,
+<code>Flask-SQLAlchemy</code> and <code>Flask-WTF</code>, but the same
+thing can be done using other web frameworks and ORMs. We will need
+<code>pillow</code> as well in case we want to require images with
+specific width, height or aspect ratio, and a library to upload images
+to the storage service (e.g., <code>boto3</code> for S3).</p>
+<h2 id="define-the-models">Define the models</h2>
+<p>For this example, create the tables <code>images</code> and
+<code>monkeys</code>:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a target="_blank" href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Image(Model):</span>
+<span id="cb1-2"><a target="_blank" href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    __tablename__ <span class="op">=</span> <span class="st">&#39;images&#39;</span></span>
+<span id="cb1-3"><a target="_blank" href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a target="_blank" href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span> <span class="op">=</span> db.Column(db.Integer, primary_key<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-5"><a target="_blank" href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    url <span class="op">=</span> db.Column(db.String(<span class="dv">256</span>), nullable<span class="op">=</span><span class="va">False</span>, unique<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-6"><a target="_blank" href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a target="_blank" href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a target="_blank" href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Monkey(Model):</span>
+<span id="cb1-9"><a target="_blank" href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    __tablename__ <span class="op">=</span> <span class="st">&#39;monkeys&#39;</span></span>
+<span id="cb1-10"><a target="_blank" href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a target="_blank" href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">id</span> <span class="op">=</span> db.Column(db.Integer, primary_key<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-12"><a target="_blank" href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    name <span class="op">=</span> db.Column(db.String(<span class="dv">80</span>), nullable<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb1-13"><a target="_blank" href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    image_id <span class="op">=</span> db.Column(db.Integer, db.ForeignKey(<span class="st">&#39;images.id&#39;</span>))</span>
+<span id="cb1-14"><a target="_blank" href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a target="_blank" href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> db.relationship(<span class="st">&#39;Image&#39;</span>,</span>
+<span id="cb1-16"><a target="_blank" href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                            single_parent<span class="op">=</span><span class="va">True</span>,</span>
+<span id="cb1-17"><a target="_blank" href="#cb1-17" aria-hidden="true" tabindex="-1"></a>                            cascade<span class="op">=</span><span class="st">&#39;all,delete-orphan&#39;</span>)</span></code></pre></div>
+<h2 id="extend-wtforms-objects">Extend WTForms objects</h2>
+<p>Create an image input and a validator to restrict the input type to
+images:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a target="_blank" href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> flask_wtf.<span class="bu">file</span> <span class="im">import</span> FileAllowed</span>
+<span id="cb2-2"><a target="_blank" href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> markupsafe <span class="im">import</span> Markup</span>
+<span id="cb2-3"><a target="_blank" href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> werkzeug.datastructures <span class="im">import</span> FileStorage</span>
+<span id="cb2-4"><a target="_blank" href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> wtforms.widgets <span class="im">import</span> FileInput</span>
+<span id="cb2-5"><a target="_blank" href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a target="_blank" href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a target="_blank" href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ImageInput(FileInput):</span>
+<span id="cb2-8"><a target="_blank" href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a target="_blank" href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, field, <span class="op">**</span>kwargs):</span>
+<span id="cb2-10"><a target="_blank" href="#cb2-10" aria-hidden="true" tabindex="-1"></a>        kwargs.setdefault(<span class="st">&#39;id&#39;</span>, field.<span class="bu">id</span>)</span>
+<span id="cb2-11"><a target="_blank" href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        kwargs.setdefault(<span class="st">&#39;type&#39;</span>, <span class="va">self</span>.input_type)</span>
+<span id="cb2-12"><a target="_blank" href="#cb2-12" aria-hidden="true" tabindex="-1"></a>        flags <span class="op">=</span> <span class="bu">getattr</span>(field, <span class="st">&#39;flags&#39;</span>, {})</span>
+<span id="cb2-13"><a target="_blank" href="#cb2-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">dir</span>(flags):</span>
+<span id="cb2-14"><a target="_blank" href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> k <span class="kw">in</span> <span class="va">self</span>.validation_attrs <span class="kw">and</span> k <span class="kw">not</span> <span class="kw">in</span> kwargs:</span>
+<span id="cb2-15"><a target="_blank" href="#cb2-15" aria-hidden="true" tabindex="-1"></a>                kwargs[k] <span class="op">=</span> <span class="bu">getattr</span>(flags, k)</span>
+<span id="cb2-16"><a target="_blank" href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a target="_blank" href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        classes <span class="op">=</span> [<span class="st">&#39;image-input&#39;</span>]</span>
+<span id="cb2-18"><a target="_blank" href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        loaded <span class="op">=</span> field.data <span class="kw">and</span> <span class="kw">not</span> <span class="bu">isinstance</span>(field.data, FileStorage)</span>
+<span id="cb2-19"><a target="_blank" href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> loaded:</span>
+<span id="cb2-20"><a target="_blank" href="#cb2-20" aria-hidden="true" tabindex="-1"></a>            classes.append(<span class="st">&#39;loaded&#39;</span>)</span>
+<span id="cb2-21"><a target="_blank" href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        classes_str <span class="op">=</span> <span class="st">&#39; &#39;</span>.join(classes)</span>
+<span id="cb2-22"><a target="_blank" href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        html <span class="op">=</span> <span class="ss">f&#39;&lt;div class=&quot;</span><span class="sc">{</span>classes_str<span class="sc">}</span><span class="ss">&quot;&gt;&#39;</span></span>
+<span id="cb2-23"><a target="_blank" href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        html <span class="op">+=</span> <span class="st">&#39;&lt;input </span><span class="sc">%s</span><span class="st">&gt;&#39;</span> <span class="op">%</span> <span class="va">self</span>.html_params(name<span class="op">=</span>field.name, <span class="op">**</span>kwargs)</span>
+<span id="cb2-24"><a target="_blank" href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> loaded:</span>
+<span id="cb2-25"><a target="_blank" href="#cb2-25" aria-hidden="true" tabindex="-1"></a>            html <span class="op">+=</span> <span class="ss">f&#39;&lt;img src=&quot;</span><span class="sc">{</span>field<span class="sc">.</span>data<span class="sc">.</span>url<span class="sc">}</span><span class="ss">&quot;&gt;&#39;</span></span>
+<span id="cb2-26"><a target="_blank" href="#cb2-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb2-27"><a target="_blank" href="#cb2-27" aria-hidden="true" tabindex="-1"></a>            html <span class="op">+=</span> <span class="st">&#39;&lt;img&gt;&#39;</span></span>
+<span id="cb2-28"><a target="_blank" href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        html <span class="op">+=</span> <span class="st">&#39;&lt;/div&gt;&#39;</span></span>
+<span id="cb2-29"><a target="_blank" href="#cb2-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Markup(html)</span>
+<span id="cb2-30"><a target="_blank" href="#cb2-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-31"><a target="_blank" href="#cb2-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-32"><a target="_blank" href="#cb2-32" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ImageAllowed(FileAllowed):</span>
+<span id="cb2-33"><a target="_blank" href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a target="_blank" href="#cb2-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, upload_set<span class="op">=</span>(<span class="st">&#39;jpg&#39;</span>, <span class="st">&#39;jpeg&#39;</span>, <span class="st">&#39;png&#39;</span>), message<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb2-35"><a target="_blank" href="#cb2-35" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(upload_set, message)</span>
+<span id="cb2-36"><a target="_blank" href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        mime_types <span class="op">=</span> []</span>
+<span id="cb2-37"><a target="_blank" href="#cb2-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> allowed_type <span class="kw">in</span> upload_set:</span>
+<span id="cb2-38"><a target="_blank" href="#cb2-38" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> allowed_type.startswith(<span class="st">&#39;image/&#39;</span>):</span>
+<span id="cb2-39"><a target="_blank" href="#cb2-39" aria-hidden="true" tabindex="-1"></a>                mime_type <span class="op">=</span> allowed_type</span>
+<span id="cb2-40"><a target="_blank" href="#cb2-40" aria-hidden="true" tabindex="-1"></a>            <span class="cf">else</span>:</span>
+<span id="cb2-41"><a target="_blank" href="#cb2-41" aria-hidden="true" tabindex="-1"></a>                mime_type <span class="op">=</span> <span class="ss">f&#39;image/</span><span class="sc">{</span>allowed_type<span class="sc">}</span><span class="ss">&#39;</span></span>
+<span id="cb2-42"><a target="_blank" href="#cb2-42" aria-hidden="true" tabindex="-1"></a>            mime_types.append(mime_type)</span>
+<span id="cb2-43"><a target="_blank" href="#cb2-43" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.field_flags <span class="op">=</span> {<span class="st">&#39;accept&#39;</span>: <span class="st">&#39;, &#39;</span>.join(mime_types)}</span></code></pre></div>
+<p>The input renders an HTML <code>input</code> element with “file”
+type, along with an <code>img</code> and wrapped by a div with class
+<code>image-input</code>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb3-1"><a target="_blank" href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;div</span> <span class="er">class</span><span class="ot">=</span><span class="st">&quot;image-input&quot;</span><span class="kw">&gt;</span></span>
+<span id="cb3-2"><a target="_blank" href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;input</span> <span class="er">accept</span><span class="ot">=</span><span class="st">&quot;image/jpeg, image/jpg&quot;</span> <span class="er">id</span><span class="ot">=</span><span class="st">&quot;image&quot;</span> <span class="er">name</span><span class="ot">=</span><span class="st">&quot;image&quot;</span> <span class="er">type</span><span class="ot">=</span><span class="st">&quot;file&quot;</span><span class="kw">&gt;</span></span>
+<span id="cb3-3"><a target="_blank" href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">&lt;img&gt;</span></span>
+<span id="cb3-4"><a target="_blank" href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;/div&gt;</span></span></code></pre></div>
+<p>With a bit of javascript and css we can make this input to display
+the image once the input changed, so we can see the image we are going
+to upload:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb4-1"><a target="_blank" href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (<span class="kw">let</span> element <span class="kw">of</span> <span class="bu">document</span><span class="op">.</span><span class="fu">querySelectorAll</span>(<span class="st">&#39;.image-input input&#39;</span>)) {</span>
+<span id="cb4-2"><a target="_blank" href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  element<span class="op">.</span><span class="at">onchange</span> <span class="op">=</span> <span class="kw">function</span>(ev) {</span>
+<span id="cb4-3"><a target="_blank" href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> div <span class="op">=</span> <span class="kw">this</span><span class="op">.</span><span class="at">parentNode</span><span class="op">;</span></span>
+<span id="cb4-4"><a target="_blank" href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> image <span class="op">=</span> div<span class="op">.</span><span class="fu">querySelector</span>(<span class="st">&#39;img&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-5"><a target="_blank" href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">let</span> reader <span class="op">=</span> <span class="kw">new</span> <span class="bu">FileReader</span>()<span class="op">;</span></span>
+<span id="cb4-6"><a target="_blank" href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    reader<span class="op">.</span><span class="at">onload</span> <span class="op">=</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb4-7"><a target="_blank" href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      image<span class="op">.</span><span class="at">src</span> <span class="op">=</span> reader<span class="op">.</span><span class="at">result</span><span class="op">;</span></span>
+<span id="cb4-8"><a target="_blank" href="#cb4-8" aria-hidden="true" tabindex="-1"></a>      div<span class="op">.</span><span class="at">classList</span><span class="op">.</span><span class="fu">add</span>(<span class="st">&#39;loaded&#39;</span>)<span class="op">;</span></span>
+<span id="cb4-9"><a target="_blank" href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    }<span class="op">;</span></span>
+<span id="cb4-10"><a target="_blank" href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    reader<span class="op">.</span><span class="fu">readAsDataURL</span>(ev<span class="op">.</span><span class="at">target</span><span class="op">.</span><span class="at">files</span>[<span class="dv">0</span>])<span class="op">;</span></span>
+<span id="cb4-11"><a target="_blank" href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  }<span class="op">;</span></span>
+<span id="cb4-12"><a target="_blank" href="#cb4-12" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode css"><code class="sourceCode css"><span id="cb5-1"><a target="_blank" href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">.image-input</span> {</span>
+<span id="cb5-2"><a target="_blank" href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">display</span>: <span class="dv">block</span><span class="op">;</span></span>
+<span id="cb5-3"><a target="_blank" href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">width</span>: <span class="dv">400</span><span class="dt">px</span><span class="op">;</span></span>
+<span id="cb5-4"><a target="_blank" href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">height</span>: <span class="dv">400</span><span class="dt">px</span><span class="op">;</span></span>
+<span id="cb5-5"><a target="_blank" href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">border</span>: <span class="dv">solid</span> <span class="dv">1</span><span class="dt">px</span> <span class="cn">#dadce0</span><span class="op">;</span></span>
+<span id="cb5-6"><a target="_blank" href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">position</span>: <span class="dv">relative</span><span class="op">;</span></span>
+<span id="cb5-7"><a target="_blank" href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">overflow</span>: <span class="dv">clip</span><span class="op">;</span></span>
+<span id="cb5-8"><a target="_blank" href="#cb5-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-9"><a target="_blank" href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="fu">.image-input.loaded</span> {</span>
+<span id="cb5-10"><a target="_blank" href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">height</span>: <span class="bu">auto</span><span class="op">;</span></span>
+<span id="cb5-11"><a target="_blank" href="#cb5-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-12"><a target="_blank" href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu">.image-input</span> input<span class="ex">[type</span><span class="op">=</span><span class="st">&quot;file&quot;</span><span class="ex">]</span> {</span>
+<span id="cb5-13"><a target="_blank" href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">height</span>: <span class="dv">100</span><span class="dt">%</span><span class="op">;</span></span>
+<span id="cb5-14"><a target="_blank" href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">width</span>: <span class="dv">100</span><span class="dt">%</span><span class="op">;</span></span>
+<span id="cb5-15"><a target="_blank" href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">opacity</span>: <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-16"><a target="_blank" href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">position</span>: <span class="dv">absolute</span><span class="op">;</span></span>
+<span id="cb5-17"><a target="_blank" href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">top</span>: <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-18"><a target="_blank" href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">left</span>: <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-19"><a target="_blank" href="#cb5-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">z-index</span>: <span class="dv">10</span><span class="op">;</span></span>
+<span id="cb5-20"><a target="_blank" href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">cursor</span>: <span class="dv">pointer</span><span class="op">;</span></span>
+<span id="cb5-21"><a target="_blank" href="#cb5-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-22"><a target="_blank" href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="fu">.image-input</span> img {</span>
+<span id="cb5-23"><a target="_blank" href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">width</span>: <span class="dv">100</span><span class="dt">%</span><span class="op">;</span></span>
+<span id="cb5-24"><a target="_blank" href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="kw">display</span>: <span class="dv">block</span><span class="op">;</span></span>
+<span id="cb5-25"><a target="_blank" href="#cb5-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>In case we want to add restrictions of image size and aspect ratio we
+can create another validator:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a target="_blank" href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PIL <span class="im">import</span> Image</span>
+<span id="cb6-2"><a target="_blank" href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> werkzeug.datastructures <span class="im">import</span> FileStorage</span>
+<span id="cb6-3"><a target="_blank" href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> wtforms.validators <span class="im">import</span> ValidationError</span>
+<span id="cb6-4"><a target="_blank" href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a target="_blank" href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a target="_blank" href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ImageSize:</span>
+<span id="cb6-7"><a target="_blank" href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a target="_blank" href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>,</span>
+<span id="cb6-9"><a target="_blank" href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                 width<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-10"><a target="_blank" href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                 width_tolerance<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb6-11"><a target="_blank" href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                 height<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-12"><a target="_blank" href="#cb6-12" aria-hidden="true" tabindex="-1"></a>                 height_tolerance<span class="op">=</span><span class="dv">0</span>,</span>
+<span id="cb6-13"><a target="_blank" href="#cb6-13" aria-hidden="true" tabindex="-1"></a>                 aspect_ratio<span class="op">=</span><span class="va">None</span>,</span>
+<span id="cb6-14"><a target="_blank" href="#cb6-14" aria-hidden="true" tabindex="-1"></a>                 aspect_ratio_tolerance<span class="op">=</span><span class="fl">.01</span>):</span>
+<span id="cb6-15"><a target="_blank" href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> width <span class="kw">or</span> height <span class="kw">or</span> aspect_ratio</span>
+<span id="cb6-16"><a target="_blank" href="#cb6-16" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.width <span class="op">=</span> width</span>
+<span id="cb6-17"><a target="_blank" href="#cb6-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.width_tolerance <span class="op">=</span> <span class="bu">abs</span>(width_tolerance)</span>
+<span id="cb6-18"><a target="_blank" href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.height <span class="op">=</span> height</span>
+<span id="cb6-19"><a target="_blank" href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.height_tolerance <span class="op">=</span> <span class="bu">abs</span>(height_tolerance)</span>
+<span id="cb6-20"><a target="_blank" href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.aspect_ratio <span class="op">=</span> aspect_ratio</span>
+<span id="cb6-21"><a target="_blank" href="#cb6-21" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.aspect_ratio_tolerance <span class="op">=</span> <span class="bu">abs</span>(aspect_ratio_tolerance)</span>
+<span id="cb6-22"><a target="_blank" href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-23"><a target="_blank" href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__call__</span>(<span class="va">self</span>, form, field):</span>
+<span id="cb6-24"><a target="_blank" href="#cb6-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> field.data <span class="kw">and</span> <span class="bu">isinstance</span>(field.data, FileStorage):</span>
+<span id="cb6-25"><a target="_blank" href="#cb6-25" aria-hidden="true" tabindex="-1"></a>            image <span class="op">=</span> Image.<span class="bu">open</span>(field.data)</span>
+<span id="cb6-26"><a target="_blank" href="#cb6-26" aria-hidden="true" tabindex="-1"></a>            field.data.seek(<span class="dv">0</span>)</span>
+<span id="cb6-27"><a target="_blank" href="#cb6-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">self</span>.width:</span>
+<span id="cb6-28"><a target="_blank" href="#cb6-28" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="kw">not</span> <span class="va">self</span>._is_close(<span class="va">self</span>.width,</span>
+<span id="cb6-29"><a target="_blank" href="#cb6-29" aria-hidden="true" tabindex="-1"></a>                                      image.width,</span>
+<span id="cb6-30"><a target="_blank" href="#cb6-30" aria-hidden="true" tabindex="-1"></a>                                      <span class="va">self</span>.width_tolerance):</span>
+<span id="cb6-31"><a target="_blank" href="#cb6-31" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">raise</span> ValidationError(<span class="st">&#39;Invalid width&#39;</span>)</span>
+<span id="cb6-32"><a target="_blank" href="#cb6-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-33"><a target="_blank" href="#cb6-33" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">self</span>.height:</span>
+<span id="cb6-34"><a target="_blank" href="#cb6-34" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="kw">not</span> <span class="va">self</span>._is_close(<span class="va">self</span>.height,</span>
+<span id="cb6-35"><a target="_blank" href="#cb6-35" aria-hidden="true" tabindex="-1"></a>                                      image.height,</span>
+<span id="cb6-36"><a target="_blank" href="#cb6-36" aria-hidden="true" tabindex="-1"></a>                                      <span class="va">self</span>.height_tolerance):</span>
+<span id="cb6-37"><a target="_blank" href="#cb6-37" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">raise</span> ValidationError(<span class="st">&#39;Invalid height&#39;</span>)</span>
+<span id="cb6-38"><a target="_blank" href="#cb6-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-39"><a target="_blank" href="#cb6-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="va">self</span>.aspect_ratio <span class="kw">and</span> <span class="kw">not</span> (<span class="va">self</span>.width <span class="kw">and</span> <span class="va">self</span>.height):</span>
+<span id="cb6-40"><a target="_blank" href="#cb6-40" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="kw">not</span> <span class="va">self</span>._is_close(<span class="va">self</span>.aspect_ratio,</span>
+<span id="cb6-41"><a target="_blank" href="#cb6-41" aria-hidden="true" tabindex="-1"></a>                                   image.width<span class="op">/</span>image.height,</span>
+<span id="cb6-42"><a target="_blank" href="#cb6-42" aria-hidden="true" tabindex="-1"></a>                                   <span class="va">self</span>.aspect_ratio_tolerance):</span>
+<span id="cb6-43"><a target="_blank" href="#cb6-43" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">raise</span> ValidationError(<span class="st">&#39;Invalid aspect ratio&#39;</span>)</span>
+<span id="cb6-44"><a target="_blank" href="#cb6-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-45"><a target="_blank" href="#cb6-45" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> _is_close(<span class="va">self</span>, a, b, tol):</span>
+<span id="cb6-46"><a target="_blank" href="#cb6-46" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">abs</span>(a<span class="op">-</span>b) <span class="op">&lt;=</span> tol</span></code></pre></div>
+<p>Using <code>ImageSize</code> we can restrict the width to 1000px
+(<code>ImageSize(width=1000)</code>) or allow only squared images
+(<code>ImageSize(aspect_ratio=1)</code>). Note that we add tolerance
+variables to allow small errors, specially relevant when calculating
+aspect ratios since we need to divide integers and round down.</p>
+<p>Then, we create the <code>ImageField</code>, the field we will use in
+our forms, with a default <code>ImageAllowed</code> validator:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a target="_blank" href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> flask_wtf.<span class="bu">file</span> <span class="im">import</span> FileField</span>
+<span id="cb7-2"><a target="_blank" href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a target="_blank" href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a target="_blank" href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ImageField(FileField):</span>
+<span id="cb7-5"><a target="_blank" href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    widget <span class="op">=</span> ImageInput()</span>
+<span id="cb7-6"><a target="_blank" href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a target="_blank" href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, label<span class="op">=</span><span class="va">None</span>, validators<span class="op">=</span><span class="va">None</span>, <span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb7-8"><a target="_blank" href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> validators:</span>
+<span id="cb7-9"><a target="_blank" href="#cb7-9" aria-hidden="true" tabindex="-1"></a>            validators <span class="op">=</span> [ImageAllowed()]</span>
+<span id="cb7-10"><a target="_blank" href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">elif</span> <span class="kw">not</span> <span class="bu">any</span>(<span class="bu">isinstance</span>(i, ImageAllowed) <span class="cf">for</span> i <span class="kw">in</span> validators):</span>
+<span id="cb7-11"><a target="_blank" href="#cb7-11" aria-hidden="true" tabindex="-1"></a>            validators <span class="op">+=</span> [ImageAllowed()]</span>
+<span id="cb7-12"><a target="_blank" href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>(label, validators, <span class="op">*</span>args, <span class="op">**</span>kwargs)</span></code></pre></div>
+<h2 id="using-the-image-field-in-wtforms">Using the image field in
+WTForms</h2>
+<p>Now we can add an image field to our form. The upload process can be
+added to the form in <code>populate_obj</code> (this method runs after
+the form validation) or in the view (after validation, when calling
+<code>form.populate_obj</code>). Here is how to do it in the form:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> werkzeug.datastructures <span class="im">import</span> FileStorage</span>
+<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> wtforms <span class="im">import</span> StringField</span>
+<span id="cb8-3"><a target="_blank" href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> wtforms.validators <span class="im">import</span> DataRequired</span>
+<span id="cb8-4"><a target="_blank" href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a target="_blank" href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> app.models <span class="im">import</span> Image <span class="im">as</span> ImageModel  <span class="co"># In case PIL.Image is imported.</span></span>
+<span id="cb8-6"><a target="_blank" href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> app.utils <span class="im">import</span> upload_image</span>
+<span id="cb8-7"><a target="_blank" href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a target="_blank" href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a target="_blank" href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MonkeyForm(FlaskForm):</span>
+<span id="cb8-10"><a target="_blank" href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    name <span class="op">=</span> StringField(validators<span class="op">=</span>[DataRequired()])</span>
+<span id="cb8-11"><a target="_blank" href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    image <span class="op">=</span> ImageField(validators<span class="op">=</span>[ImageAllowed([<span class="st">&#39;jpeg&#39;</span>, <span class="st">&#39;jpg&#39;</span>]),</span>
+<span id="cb8-12"><a target="_blank" href="#cb8-12" aria-hidden="true" tabindex="-1"></a>                                   ImageSize(width<span class="op">=</span><span class="dv">1920</span>)])</span>
+<span id="cb8-13"><a target="_blank" href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a target="_blank" href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> populate_obj(<span class="va">self</span>, obj):</span>
+<span id="cb8-15"><a target="_blank" href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        fs <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb8-16"><a target="_blank" href="#cb8-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(<span class="va">self</span>.image.data, FileStorage):</span>
+<span id="cb8-17"><a target="_blank" href="#cb8-17" aria-hidden="true" tabindex="-1"></a>            fs <span class="op">=</span> <span class="va">self</span>.image.data</span>
+<span id="cb8-18"><a target="_blank" href="#cb8-18" aria-hidden="true" tabindex="-1"></a>            <span class="va">self</span>.image.data <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb8-19"><a target="_blank" href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().populate_obj(obj)</span>
+<span id="cb8-20"><a target="_blank" href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> fs:</span>
+<span id="cb8-21"><a target="_blank" href="#cb8-21" aria-hidden="true" tabindex="-1"></a>            url <span class="op">=</span> upload_image(fs, folder<span class="op">=</span><span class="st">&#39;monkeys&#39;</span>)</span>
+<span id="cb8-22"><a target="_blank" href="#cb8-22" aria-hidden="true" tabindex="-1"></a>            obj.image <span class="op">=</span> ImageModel(url<span class="op">=</span>url)</span></code></pre></div>
+<p><img
+src="https://raw.githubusercontent.com/mmas/mmas.github.io/master/images/wtforms-monkey-form.jpg" /></p>
+<p>As you can see, a function <code>upload_image</code> is expected.
+This function uploads the <code>FileStorage</code> variable to the
+storage service and return its URL. Here’s an example for S3:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a target="_blank" href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb9-2"><a target="_blank" href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tempfile <span class="im">import</span> mktemp</span>
+<span id="cb9-3"><a target="_blank" href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a target="_blank" href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> boto3</span>
+<span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a target="_blank" href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a target="_blank" href="#cb9-7" aria-hidden="true" tabindex="-1"></a>AWS_ACCESS_KEY_ID <span class="op">=</span> os.environ[<span class="st">&#39;AWS_ACCESS_KEY_ID&#39;</span>]</span>
+<span id="cb9-8"><a target="_blank" href="#cb9-8" aria-hidden="true" tabindex="-1"></a>AWS_SECRET_ACCESS_KEY <span class="op">=</span> os.environ[<span class="st">&#39;AWS_SECRET_ACCESS_KEY&#39;</span>]</span>
+<span id="cb9-9"><a target="_blank" href="#cb9-9" aria-hidden="true" tabindex="-1"></a>AWS_DEFAULT_REGION <span class="op">=</span> os.environ[<span class="st">&#39;AWS_DEFAULT_REGION&#39;</span>]</span>
+<span id="cb9-10"><a target="_blank" href="#cb9-10" aria-hidden="true" tabindex="-1"></a>S3_BUCKET_NAME <span class="op">=</span> os.environ[<span class="st">&#39;S3_BUCKET_NAME&#39;</span>]</span>
+<span id="cb9-11"><a target="_blank" href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a target="_blank" href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a target="_blank" href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> upload_image(fs, folder<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb9-14"><a target="_blank" href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> mktemp()</span>
+<span id="cb9-15"><a target="_blank" href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    fs.save(path)</span>
+<span id="cb9-16"><a target="_blank" href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    s3_path <span class="op">=</span> fs.filename</span>
+<span id="cb9-17"><a target="_blank" href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> folder:</span>
+<span id="cb9-18"><a target="_blank" href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        s3_path <span class="op">=</span> <span class="ss">f&#39;</span><span class="sc">{</span>folder<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>s3_path<span class="sc">}</span><span class="ss">&#39;</span></span>
+<span id="cb9-19"><a target="_blank" href="#cb9-19" aria-hidden="true" tabindex="-1"></a>    s3 <span class="op">=</span> boto3.client(<span class="st">&#39;s3&#39;</span>,</span>
+<span id="cb9-20"><a target="_blank" href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                      aws_access_key_id<span class="op">=</span>AWS_ACCESS_KEY_ID,</span>
+<span id="cb9-21"><a target="_blank" href="#cb9-21" aria-hidden="true" tabindex="-1"></a>                      aws_secret_access_key<span class="op">=</span>AWS_SECRET_ACCESS_KEY,</span>
+<span id="cb9-22"><a target="_blank" href="#cb9-22" aria-hidden="true" tabindex="-1"></a>                      region_name<span class="op">=</span>AWS_DEFAULT_REGION)</span>
+<span id="cb9-23"><a target="_blank" href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    s3.upload_file(Bucket<span class="op">=</span>S3_BUCKET_NAME,</span>
+<span id="cb9-24"><a target="_blank" href="#cb9-24" aria-hidden="true" tabindex="-1"></a>                   Filename<span class="op">=</span>path,</span>
+<span id="cb9-25"><a target="_blank" href="#cb9-25" aria-hidden="true" tabindex="-1"></a>                   Key<span class="op">=</span>s3_path,</span>
+<span id="cb9-26"><a target="_blank" href="#cb9-26" aria-hidden="true" tabindex="-1"></a>                   ExtraArgs<span class="op">=</span>{<span class="st">&#39;ContentType&#39;</span>: fs.mimetype})</span>
+<span id="cb9-27"><a target="_blank" href="#cb9-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f&#39;https://</span><span class="sc">{</span>S3_BUCKET_NAME<span class="sc">}</span><span class="ss">.s3.</span><span class="sc">{</span>AWS_DEFAULT_REGION<span class="sc">}</span><span class="ss">&#39;</span> \</span>
+<span id="cb9-28"><a target="_blank" href="#cb9-28" aria-hidden="true" tabindex="-1"></a>           <span class="ss">f&#39;.amazonaws.com/</span><span class="sc">{</span>s3_path<span class="sc">}</span><span class="ss">&#39;</span></span></code></pre></div>
+  </section>
+</article>
+
+<div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "https://mmas.github.io/wtforms-images-storage-s3";
+    this.page.identifier = "wtforms-images-storage-s3";
+  };
+  (function() {
+    var d = document, s = d.createElement('script');
+
+    s.src = '//mmast.disqus.com/embed.js';
+
+    s.setAttribute('data-timestamp', +new Date());
+    (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+</section>
+
+
+    </section>
+    <footer></footer>
+    
+    
+  </body>
+</html>

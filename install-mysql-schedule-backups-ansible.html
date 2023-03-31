@@ -20,14 +20,14 @@
     <meta name="description" content="In this article, we will install and configure MySQL and schedule database backups in Ubuntu using Ansible. Prerequisites Ansible An Ubuntu (or other...">
     <meta name="twitter:description" content="In this article, we will install and configure MySQL and schedule database backups in Ubuntu using Ansible. Prerequisites Ansible An Ubuntu (or other...">
     <meta property="og:description" content="In this article, we will install and configure MySQL and schedule database backups in Ubuntu using Ansible. Prerequisites Ansible An Ubuntu (or other...">
-    <meta name="keywords" content="ansible,homelab,mysql">
+    <meta name="keywords" content="ansible,bash,homelab,mysql">
     <meta property="og:type" content="blog">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
 <meta property="og:type" content="article">
 <meta property="article:author" content="https://github.com/mmas">
 <meta property="article:section" content="ansible">
-<meta property="article:tag" content="ansible,homelab,mysql">
+<meta property="article:tag" content="ansible,bash,homelab,mysql">
 <meta property="article:published_time" content="2023-03-29">
 <meta property="article:modified_time" content="2023-03-29">
 
@@ -73,6 +73,8 @@
   
   <a class="tag" href="/tags?tag=ansible">ansible</a>
   
+  <a class="tag" href="/tags?tag=bash">bash</a>
+  
   <a class="tag" href="/tags?tag=homelab">homelab</a>
   
   <a class="tag" href="/tags?tag=mysql">mysql</a>
@@ -89,153 +91,151 @@ database backups in Ubuntu using Ansible.</p>
 <li>Package <code>python3-pip</code> installed in host</li>
 </ul>
 <p>A variable <code>mysql_password</code> is required in the playbook.
-It is recommended to store it <a
-href="https://www.redhat.com/sysadmin/ansible-playbooks-secrets">as a
+It is recommended to store it <a target="_blank" href="https://www.redhat.com/sysadmin/ansible-playbooks-secrets">as a
 secret</a>.</p>
 <p>Run the tasks as root. Either in the host definintion:</p>
 <pre><code>mysql ansible_user=me ansible_become=yes</code></pre>
 <p>or at play level:</p>
 <div class="sourceCode" id="cb2"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hosts</span><span class="kw">:</span><span class="at"> mysql</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a target="_blank" href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hosts</span><span class="kw">:</span><span class="at"> mysql</span></span>
+<span id="cb2-2"><a target="_blank" href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
 <h2 id="installation-and-basic-configuration">Installation and basic
 configuration</h2>
 <p>Install the required APT packages and the Python development headers
-and libraries (required by <a
-href="https://docs.ansible.com/ansible/latest/collections/community/mysql/index.html">the
+and libraries (required by <a target="_blank" href="https://docs.ansible.com/ansible/latest/collections/community/mysql/index.html">the
 MySQL collection in Ansible</a>):</p>
 <div class="sourceCode" id="cb3"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install mysql</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">apt</span><span class="kw">:</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> mysql-server</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> default-libmysqlclient-dev</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">update_cache</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> enable and start mysql</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">service</span><span class="kw">:</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mysql</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> started</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install mysql python library</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pip</span><span class="kw">:</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mysqlclient</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a target="_blank" href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install mysql</span></span>
+<span id="cb3-2"><a target="_blank" href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">apt</span><span class="kw">:</span></span>
+<span id="cb3-3"><a target="_blank" href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span></span>
+<span id="cb3-4"><a target="_blank" href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> mysql-server</span></span>
+<span id="cb3-5"><a target="_blank" href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> default-libmysqlclient-dev</span></span>
+<span id="cb3-6"><a target="_blank" href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">update_cache</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb3-7"><a target="_blank" href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a target="_blank" href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> enable and start mysql</span></span>
+<span id="cb3-9"><a target="_blank" href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">service</span><span class="kw">:</span></span>
+<span id="cb3-10"><a target="_blank" href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mysql</span></span>
+<span id="cb3-11"><a target="_blank" href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> started</span></span>
+<span id="cb3-12"><a target="_blank" href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb3-13"><a target="_blank" href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a target="_blank" href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install mysql python library</span></span>
+<span id="cb3-15"><a target="_blank" href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">pip</span><span class="kw">:</span></span>
+<span id="cb3-16"><a target="_blank" href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mysqlclient</span></span></code></pre></div>
 <p>Credentials can be saved in <code>$HOME/.my.cnf</code>, so we set the
 password for the root user and save the credentials in that config file.
 We set the default user password before creating the config file,
 otherwise, we will have an authentication error:</p>
 <div class="sourceCode" id="cb4"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">stat</span><span class="kw">:</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /root/.my.cnf</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">register</span><span class="kw">:</span><span class="at"> mycnf</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> set default user password</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mysql_user</span><span class="kw">:</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> root</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ mysql_password }}&quot;</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">when</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ not mycnf.stat.exists }}&quot;</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> save credentials</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /root/.my.cnf</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">    content</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      [mysql]</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>      user = root</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>      password= {{ mysql_password }}</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>      host = localhost</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>      [mysqldump]</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      user = root</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>      password= {{ mysql_password }}</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>      host = localhost</span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a target="_blank" href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">stat</span><span class="kw">:</span></span>
+<span id="cb4-2"><a target="_blank" href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /root/.my.cnf</span></span>
+<span id="cb4-3"><a target="_blank" href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">register</span><span class="kw">:</span><span class="at"> mycnf</span></span>
+<span id="cb4-4"><a target="_blank" href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a target="_blank" href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> set default user password</span></span>
+<span id="cb4-6"><a target="_blank" href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mysql_user</span><span class="kw">:</span></span>
+<span id="cb4-7"><a target="_blank" href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> root</span></span>
+<span id="cb4-8"><a target="_blank" href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ mysql_password }}&quot;</span></span>
+<span id="cb4-9"><a target="_blank" href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">when</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ not mycnf.stat.exists }}&quot;</span></span>
+<span id="cb4-10"><a target="_blank" href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a target="_blank" href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> save credentials</span></span>
+<span id="cb4-12"><a target="_blank" href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb4-13"><a target="_blank" href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /root/.my.cnf</span></span>
+<span id="cb4-14"><a target="_blank" href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">    content</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb4-15"><a target="_blank" href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      [mysql]</span>
+<span id="cb4-16"><a target="_blank" href="#cb4-16" aria-hidden="true" tabindex="-1"></a>      user = root</span>
+<span id="cb4-17"><a target="_blank" href="#cb4-17" aria-hidden="true" tabindex="-1"></a>      password= {{ mysql_password }}</span>
+<span id="cb4-18"><a target="_blank" href="#cb4-18" aria-hidden="true" tabindex="-1"></a>      host = localhost</span>
+<span id="cb4-19"><a target="_blank" href="#cb4-19" aria-hidden="true" tabindex="-1"></a>      [mysqldump]</span>
+<span id="cb4-20"><a target="_blank" href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      user = root</span>
+<span id="cb4-21"><a target="_blank" href="#cb4-21" aria-hidden="true" tabindex="-1"></a>      password= {{ mysql_password }}</span>
+<span id="cb4-22"><a target="_blank" href="#cb4-22" aria-hidden="true" tabindex="-1"></a>      host = localhost</span></code></pre></div>
 <h2 id="allow-remote-access">Allow remote access</h2>
 <p>If we want to access the MySQL server from a different host, we need
 to edit the MySQL settings and grant priviledges to the roor user (and
 allow the port used by the server).</p>
 <p>Listen all addresses to allow remote access:</p>
 <div class="sourceCode" id="cb5"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow remote access</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">lineinfile</span><span class="kw">:</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /etc/mysql/mysql.conf.d/mysqld.cnf</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">regexp</span><span class="kw">:</span><span class="at"> ^(bind-address\s+=) 127.0.0.1</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">line</span><span class="kw">:</span><span class="at"> \1 0.0.0.0</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">backrefs</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> present</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart mysql</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a target="_blank" href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow remote access</span></span>
+<span id="cb5-2"><a target="_blank" href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">lineinfile</span><span class="kw">:</span></span>
+<span id="cb5-3"><a target="_blank" href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /etc/mysql/mysql.conf.d/mysqld.cnf</span></span>
+<span id="cb5-4"><a target="_blank" href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">regexp</span><span class="kw">:</span><span class="at"> ^(bind-address\s+=) 127.0.0.1</span></span>
+<span id="cb5-5"><a target="_blank" href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">line</span><span class="kw">:</span><span class="at"> \1 0.0.0.0</span></span>
+<span id="cb5-6"><a target="_blank" href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">backrefs</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb5-7"><a target="_blank" href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> present</span></span>
+<span id="cb5-8"><a target="_blank" href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
+<span id="cb5-9"><a target="_blank" href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart mysql</span></span></code></pre></div>
 <p>Allow root user to connect remotelly:</p>
 <div class="sourceCode" id="cb6"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow remote access for default user</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mysql_user</span><span class="kw">:</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> root</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">host</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;%&#39;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">priv</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;*.*:ALL,GRANT&#39;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ mysql_password }}&quot;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">login_user</span><span class="kw">:</span><span class="at"> root</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">login_password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ mysql_password }}&quot;</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a target="_blank" href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow remote access for default user</span></span>
+<span id="cb6-2"><a target="_blank" href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mysql_user</span><span class="kw">:</span></span>
+<span id="cb6-3"><a target="_blank" href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> root</span></span>
+<span id="cb6-4"><a target="_blank" href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">host</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;%&#39;</span></span>
+<span id="cb6-5"><a target="_blank" href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">priv</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;*.*:ALL,GRANT&#39;</span></span>
+<span id="cb6-6"><a target="_blank" href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ mysql_password }}&quot;</span></span>
+<span id="cb6-7"><a target="_blank" href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">login_user</span><span class="kw">:</span><span class="at"> root</span></span>
+<span id="cb6-8"><a target="_blank" href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">login_password</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ mysql_password }}&quot;</span></span></code></pre></div>
 <p>And allow the port 3306 in the firewall:</p>
 <div class="sourceCode" id="cb7"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow port 3306</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ufw</span><span class="kw">:</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">rule</span><span class="kw">:</span><span class="at"> allow</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;3306&#39;</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">proto</span><span class="kw">:</span><span class="at"> tcp</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a target="_blank" href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> allow port 3306</span></span>
+<span id="cb7-2"><a target="_blank" href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">ufw</span><span class="kw">:</span></span>
+<span id="cb7-3"><a target="_blank" href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">rule</span><span class="kw">:</span><span class="at"> allow</span></span>
+<span id="cb7-4"><a target="_blank" href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">port</span><span class="kw">:</span><span class="at"> </span><span class="st">&#39;3306&#39;</span></span>
+<span id="cb7-5"><a target="_blank" href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">proto</span><span class="kw">:</span><span class="at"> tcp</span></span></code></pre></div>
 <p>We will need to grant priviledges to other users in case we want
 allow them to connect remotelly.</p>
 <p>When changing the configuration file we’ll trigger the handler
 <code>restart mysql</code> to restart the MySQL service:</p>
 <div class="sourceCode" id="cb8"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">handlers</span><span class="kw">:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> restart mysql</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">service</span><span class="kw">:</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mysql</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> restarted</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">handlers</span><span class="kw">:</span></span>
+<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> restart mysql</span></span>
+<span id="cb8-3"><a target="_blank" href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">service</span><span class="kw">:</span></span>
+<span id="cb8-4"><a target="_blank" href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> mysql</span></span>
+<span id="cb8-5"><a target="_blank" href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">state</span><span class="kw">:</span><span class="at"> restarted</span></span></code></pre></div>
 <h2 id="schedule-backups">Schedule backups</h2>
 <p>We can create a simple script to backup all or some databases. Here’s
 an example of a script to backup all the databases and upload the files
 to a host named <code>backups</code>:</p>
 <div class="sourceCode" id="cb9"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-e</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-o</span> pipefail</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="va">dir</span><span class="op">=</span><span class="kw">`</span><span class="fu">mktemp</span> <span class="at">-d</span><span class="kw">`</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Saving tmp mysql backups to <span class="va">$dir</span>...</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="va">suffix</span><span class="op">=</span><span class="va">$(</span><span class="fu">date</span> +%Y%m%d<span class="va">)</span>.sql</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="va">query</span><span class="op">=</span><span class="st">&quot;</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT schema_name</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">FROM information_schema.schemata</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE schema_name not in (&#39;mysql&#39;,&#39;sys&#39;,&#39;information_schema&#39;,&#39;performance_schema&#39;);</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> db <span class="kw">in</span> <span class="kw">`</span><span class="fu">sudo</span> <span class="at">-i</span> mysql <span class="at">-e</span> <span class="st">&quot;</span><span class="va">$(</span><span class="bu">echo</span> <span class="va">$query)</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> SCHEMA_NAME<span class="kw">`;</span> <span class="cf">do</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> Saving mysql database <span class="va">$db</span>...</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">path</span><span class="op">=</span><span class="va">$dir</span>/<span class="va">$db</span>.<span class="va">$suffix</span></span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sudo</span> <span class="at">-i</span> mysqldump <span class="va">$db</span> <span class="op">&gt;</span> <span class="va">$path</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> filename <span class="kw">in</span> <span class="kw">`</span><span class="fu">ls</span> <span class="va">$dir</span><span class="kw">`;</span> <span class="cf">do</span></span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> Uploading mysql database <span class="va">$db</span>...</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scp</span> <span class="va">$dir</span>/<span class="va">$filename</span> backups:/mysql/</span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> <span class="va">$dir</span></span></code></pre></div>
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a target="_blank" href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb9-2"><a target="_blank" href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a target="_blank" href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-e</span></span>
+<span id="cb9-4"><a target="_blank" href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> <span class="at">-o</span> pipefail</span>
+<span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a target="_blank" href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="va">dir</span><span class="op">=</span><span class="kw">`</span><span class="fu">mktemp</span> <span class="at">-d</span><span class="kw">`</span></span>
+<span id="cb9-7"><a target="_blank" href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> Saving tmp mysql backups to <span class="va">$dir</span>...</span>
+<span id="cb9-8"><a target="_blank" href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="va">suffix</span><span class="op">=</span><span class="va">$(</span><span class="fu">date</span> +%Y%m%d<span class="va">)</span>.sql</span>
+<span id="cb9-9"><a target="_blank" href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="va">query</span><span class="op">=</span><span class="st">&quot;</span></span>
+<span id="cb9-10"><a target="_blank" href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT schema_name</span></span>
+<span id="cb9-11"><a target="_blank" href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">FROM information_schema.schemata</span></span>
+<span id="cb9-12"><a target="_blank" href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE schema_name not in (&#39;mysql&#39;,&#39;sys&#39;,&#39;information_schema&#39;,&#39;performance_schema&#39;);</span></span>
+<span id="cb9-13"><a target="_blank" href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
+<span id="cb9-14"><a target="_blank" href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> db <span class="kw">in</span> <span class="kw">`</span><span class="fu">sudo</span> <span class="at">-i</span> mysql <span class="at">-e</span> <span class="st">&quot;</span><span class="va">$(</span><span class="bu">echo</span> <span class="va">$query)</span><span class="st">&quot;</span> <span class="kw">|</span> <span class="fu">grep</span> <span class="at">-v</span> SCHEMA_NAME<span class="kw">`;</span> <span class="cf">do</span></span>
+<span id="cb9-15"><a target="_blank" href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> Saving mysql database <span class="va">$db</span>...</span>
+<span id="cb9-16"><a target="_blank" href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">path</span><span class="op">=</span><span class="va">$dir</span>/<span class="va">$db</span>.<span class="va">$suffix</span></span>
+<span id="cb9-17"><a target="_blank" href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sudo</span> <span class="at">-i</span> mysqldump <span class="va">$db</span> <span class="op">&gt;</span> <span class="va">$path</span></span>
+<span id="cb9-18"><a target="_blank" href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb9-19"><a target="_blank" href="#cb9-19" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> filename <span class="kw">in</span> <span class="kw">`</span><span class="fu">ls</span> <span class="va">$dir</span><span class="kw">`;</span> <span class="cf">do</span></span>
+<span id="cb9-20"><a target="_blank" href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="bu">echo</span> Uploading mysql database <span class="va">$db</span>...</span>
+<span id="cb9-21"><a target="_blank" href="#cb9-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scp</span> <span class="va">$dir</span>/<span class="va">$filename</span> backups:/mysql/</span>
+<span id="cb9-22"><a target="_blank" href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="cf">done</span></span>
+<span id="cb9-23"><a target="_blank" href="#cb9-23" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span> <span class="at">-rf</span> <span class="va">$dir</span></span></code></pre></div>
 <p>Note that we are running the mysql commands as user
 <code>root</code>.</p>
 <p>We can then copy that script and schedule its execution, say everyday
 at 01:00:</p>
 <div class="sourceCode" id="cb10"><pre
-class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> copy backup script</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> files/mysql/backup.sh</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ lookup(&#39;env&#39;, &#39;HOME&#39;) }}/backup_mysql.sh&quot;</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">owner</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ ansible_user }}&quot;</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> schedule backup</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cron</span><span class="kw">:</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;backup mysql databases&quot;</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">minute</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;0&quot;</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hour</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;1&quot;</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">job</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;bash {{ lookup(&#39;env&#39;, &#39;HOME&#39;) }}/backup_mysql.sh 2&gt;&amp;1 | logger -t {{ ansible_user }}-cron&quot;</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become_user</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ ansible_user }}&quot;</span></span></code></pre></div>
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a target="_blank" href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> copy backup script</span></span>
+<span id="cb10-2"><a target="_blank" href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb10-3"><a target="_blank" href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> files/mysql/backup.sh</span></span>
+<span id="cb10-4"><a target="_blank" href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ lookup(&#39;env&#39;, &#39;HOME&#39;) }}/backup_mysql.sh&quot;</span></span>
+<span id="cb10-5"><a target="_blank" href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">owner</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ ansible_user }}&quot;</span></span>
+<span id="cb10-6"><a target="_blank" href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a target="_blank" href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> schedule backup</span></span>
+<span id="cb10-8"><a target="_blank" href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">cron</span><span class="kw">:</span></span>
+<span id="cb10-9"><a target="_blank" href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;backup mysql databases&quot;</span></span>
+<span id="cb10-10"><a target="_blank" href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">minute</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;0&quot;</span></span>
+<span id="cb10-11"><a target="_blank" href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hour</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;1&quot;</span></span>
+<span id="cb10-12"><a target="_blank" href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">job</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;bash {{ lookup(&#39;env&#39;, &#39;HOME&#39;) }}/backup_mysql.sh 2&gt;&amp;1 | logger -t {{ ansible_user }}-cron&quot;</span></span>
+<span id="cb10-13"><a target="_blank" href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become_user</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ ansible_user }}&quot;</span></span></code></pre></div>
 <p>The file and the cron job can be executed by any other sudoer, in
 this example, the ansible user configured in the hosts file.</p>
   </section>
