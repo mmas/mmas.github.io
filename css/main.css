@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500,400|Roboto+Condensed|Roboto:400,400italic');
+
 :root {
   --blue: #333380;
   --red: #aa2121;
@@ -6,7 +8,6 @@
   --purple: #5d5eb1;
   --grey: #777;
 }
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500,400|Roboto+Condensed|Roboto:400,400italic');
 *{box-sizing:border-box;border-color:#aaa;cursor:default}
 html{padding:0;margin:0;color:#090909;background-color:#f6f6f6;font-family:'Roboto',sans-serif;font-size:15px;font-weight:400;position:relative}html ::-webkit-scrollbar{width:0;height:0}
 html ::selection{color:#090909;background-color:#aaa}
