@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+  <head>
+    <title>Install Pi-hole and manage local DNS with Ansible</title>
+    
+
+    <meta charset="utf-8">
+    <meta property="og:title" content="Install Pi-hole and manage local DNS with Ansible">
+    <meta property="og:site_name" content="Modesto Mas | Blog">
+    <meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:url" content="https://mmas.github.io/install-pihole-local-dns-ansible">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta name="twitter:url" content="https://mmas.github.io/install-pihole-local-dns-ansible">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="mmas.github.io">
+    <meta name="twitter:title" content="Install Pi-hole and manage local DNS with Ansible">
+    <meta name="description" content="In this article we will install Pi-hole as our DNS server, and create local hosts and DNS records. Prerequisites Ansible A host to install Pi-hole wit...">
+    <meta name="twitter:description" content="In this article we will install Pi-hole as our DNS server, and create local hosts and DNS records. Prerequisites Ansible A host to install Pi-hole wit...">
+    <meta property="og:description" content="In this article we will install Pi-hole as our DNS server, and create local hosts and DNS records. Prerequisites Ansible A host to install Pi-hole wit...">
+    <meta name="keywords" content="ansible,homelab,pihole">
+    <meta property="og:type" content="blog">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://github.com/mmas">
+<meta property="article:section" content="ansible">
+<meta property="article:tag" content="ansible,homelab,pihole">
+<meta property="article:published_time" content="2023-04-14">
+<meta property="article:modified_time" content="2023-04-14">
+
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        CommonHTML: {
+            scale: 93,
+            showMathMenu: false
+        },
+        tex2jax: {
+            "inlineMath": [["$","$"], ["\\(","\\)"]]
+        }
+    });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  </head>
+  <body class="entry-detail">
+
+    
+    <header>
+  <div>
+    <img src="https://mmas.github.io/images/profile.jpg">
+    <a class="brand" href="/">Modesto Mas</a>
+    <span>Data/Python/DevOps Engineer</span>
+    <nav>
+      <ul>
+        <li><a href="/tags">Tags</a></li>
+        <li><a href="https://github.com/mmas/mmas.github.io/issues" target="_blank">Issues</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+    
+
+    <section id="content" role="main">
+    
+
+<article>
+  
+<header>
+  <h1><a href="/install-pihole-local-dns-ansible">Install Pi-hole and manage local DNS with Ansible</a></h1>
+  <time datetime="2023-04-14">Apr 14, 2023</time>
+  
+  <a class="tag" href="/tags?tag=ansible">ansible</a>
+  
+  <a class="tag" href="/tags?tag=homelab">homelab</a>
+  
+  <a class="tag" href="/tags?tag=pihole">pihole</a>
+  
+</header>
+
+  <section class="body">
+    <p>In this article we will install <a target="_blank" href="https://pi-hole.net/">Pi-hole</a> as our DNS server, and create
+local hosts and DNS records.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Ansible</li>
+<li>A host to install Pi-hole with <a target="_blank" href="https://docs.docker.com/engine/install/">Docker</a> and <a target="_blank" href="https://pypi.org/project/docker/">Python library for Docker</a>
+installed</li>
+</ul>
+<h2 id="install-pi-hole">Install Pi-hole</h2>
+<p>Disable network resolution:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a target="_blank" href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> disable systemd-resolved</span></span>
+<span id="cb1-2"><a target="_blank" href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">systemd</span><span class="kw">:</span></span>
+<span id="cb1-3"><a target="_blank" href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> systemd-resolved.service</span></span>
+<span id="cb1-4"><a target="_blank" href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> stopped</span></span>
+<span id="cb1-5"><a target="_blank" href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">enabled</span><span class="kw">:</span><span class="at"> </span><span class="ch">no</span></span>
+<span id="cb1-6"><a target="_blank" href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+<p>We are going to bind two configuration folders from the host to
+docker: one for Pi-hole settings and the other for <a target="_blank" href="https://dnsmasq.org/docs/dnsmasq-man.html">dnsmasq</a> settings.
+Let’s define them as variables:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a target="_blank" href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pihole_conf_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ ansible_user_dir }}/pihole_data/etc-pihole&quot;</span></span>
+<span id="cb2-2"><a target="_blank" href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pihole_dnsmasq_dir</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ ansible_user_dir }}/pihole_data/etc-dnsmasq.d&quot;</span></span></code></pre></div>
+<p>Create the required directories:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a target="_blank" href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create data directories</span></span>
+<span id="cb3-2"><a target="_blank" href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">file</span><span class="kw">:</span></span>
+<span id="cb3-3"><a target="_blank" href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ item }}&quot;</span></span>
+<span id="cb3-4"><a target="_blank" href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> directory</span></span>
+<span id="cb3-5"><a target="_blank" href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">loop</span><span class="kw">:</span></span>
+<span id="cb3-6"><a target="_blank" href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;{{ pihole_conf_dir }}&quot;</span></span>
+<span id="cb3-7"><a target="_blank" href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;{{ pihole_dnsmasq_dir }}&quot;</span></span></code></pre></div>
+<p>Before running the container creation, set the resolver namespaces to
+Cloudflare ones temporarily:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a target="_blank" href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> set temporary dns server</span></span>
+<span id="cb4-2"><a target="_blank" href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">replace</span><span class="kw">:</span></span>
+<span id="cb4-3"><a target="_blank" href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /etc/resolv.conf</span></span>
+<span id="cb4-4"><a target="_blank" href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">regexp</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;^nameserver .*$&quot;</span></span>
+<span id="cb4-5"><a target="_blank" href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">replace</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;nameserver 1.1.1.1&quot;</span></span>
+<span id="cb4-6"><a target="_blank" href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+<p>Run Pi-hole container:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a target="_blank" href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> run pihole</span></span>
+<span id="cb5-2"><a target="_blank" href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">docker_container</span><span class="kw">:</span></span>
+<span id="cb5-3"><a target="_blank" href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> pihole</span></span>
+<span id="cb5-4"><a target="_blank" href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> started</span></span>
+<span id="cb5-5"><a target="_blank" href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">image</span><span class="kw">:</span><span class="at"> pihole/pihole:latest</span></span>
+<span id="cb5-6"><a target="_blank" href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">restart_policy</span><span class="kw">:</span><span class="at"> unless-stopped</span></span>
+<span id="cb5-7"><a target="_blank" href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">hostname</span><span class="kw">:</span><span class="at"> pi.hole</span></span>
+<span id="cb5-8"><a target="_blank" href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">env</span><span class="kw">:</span></span>
+<span id="cb5-9"><a target="_blank" href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">TZ</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ lookup(&#39;pipe&#39;, &#39;cat /etc/timezone&#39;) }}&quot;</span></span>
+<span id="cb5-10"><a target="_blank" href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">VIRTUAL_HOST</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;pi.hole&quot;</span></span>
+<span id="cb5-11"><a target="_blank" href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">PROXY_LOCATION</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;pi.hole&quot;</span></span>
+<span id="cb5-12"><a target="_blank" href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">ServerIP</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;127.0.0.1&quot;</span></span>
+<span id="cb5-13"><a target="_blank" href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dns_servers</span><span class="kw">:</span></span>
+<span id="cb5-14"><a target="_blank" href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;127.0.0.1&quot;</span></span>
+<span id="cb5-15"><a target="_blank" href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;1.1.1.1&quot;</span></span>
+<span id="cb5-16"><a target="_blank" href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb5-17"><a target="_blank" href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;53:53&quot;</span></span>
+<span id="cb5-18"><a target="_blank" href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;53:53/udp&quot;</span></span>
+<span id="cb5-19"><a target="_blank" href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;8001:80&quot;</span></span>
+<span id="cb5-20"><a target="_blank" href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb5-21"><a target="_blank" href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;{{ pihole_conf_dir }}/:/etc/pihole/&quot;</span></span>
+<span id="cb5-22"><a target="_blank" href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;{{ pihole_dnsmasq_dir }}/:/etc/dnsmasq.d/&quot;</span></span></code></pre></div>
+<p>Now, replace the Cloudflare DNS resolver to 127.0.0.1:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a target="_blank" href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> set localhost dns server</span></span>
+<span id="cb6-2"><a target="_blank" href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">replace</span><span class="kw">:</span></span>
+<span id="cb6-3"><a target="_blank" href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> /etc/resolv.conf</span></span>
+<span id="cb6-4"><a target="_blank" href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">regexp</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;^nameserver .*$&quot;</span></span>
+<span id="cb6-5"><a target="_blank" href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">replace</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;nameserver 127.0.0.1&quot;</span></span>
+<span id="cb6-6"><a target="_blank" href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+<h2 id="configure-pi-hole">Configure Pi-hole</h2>
+<p>Now, we can go to http://{host_ip}:8001/admin and log in with our
+password (in the docker container logs). There, we go to Settings &gt;
+DNS and enable conditional forwarding, pointint to our DHCP (our router
+in most of the cases)</p>
+<p><img
+src="https://raw.githubusercontent.com/mmas/mmas.github.io/master/images/pihole-admin-conditional-forwarding.png" /></p>
+<p>Then, in our DHCP configuration, we need to add the host IP as our
+first DNS server. If we deploy more Pi-hole instances for redundancy,
+we’ll need to add thir IPs there as well. In Unifi, we can go to
+networks, select our LAN network and edit the DHCP DNS server.</p>
+<p><img
+src="https://raw.githubusercontent.com/mmas/mmas.github.io/master/images/pihole-unifi-dns-server.png" /></p>
+<p>At this point, we may need to reconnect to our network or forget the
+network and connect again.</p>
+<h2 id="dns-configuration">DNS configuration</h2>
+<p>In Pi-hole, if we go to Local DNS / DNS Records, we can see that our
+hosts list will be read from /etc/hosts and /etc/pihole/custom.list. We
+mounted <code>pihole_conf_dir</code> at /etc/pihole/, so we can create
+the hosts template (templates/hosts.j2) as:</p>
+<pre class="jinja2"><code>{% for item in pihole_hosts %}
+{{ item.ip }} {{ item.domain }}
+{% endfor %}</code></pre>
+<p>Define our hosts, for example:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pihole_hosts</span><span class="kw">:</span></span>
+<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> rpi</span><span class="kw">,</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.1.16</span><span class="at"> </span><span class="kw">}</span></span>
+<span id="cb8-3"><a target="_blank" href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> mgmt</span><span class="kw">,</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.1.19</span><span class="at"> </span><span class="kw">}</span></span></code></pre></div>
+<p>And create our hosts file:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a target="_blank" href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create pihole hosts</span></span>
+<span id="cb9-2"><a target="_blank" href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb9-3"><a target="_blank" href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> templates/hosts.j2</span></span>
+<span id="cb9-4"><a target="_blank" href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ pihole_conf_dir }}/custom.list&quot;</span></span>
+<span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+<p>Our CNAME records are displayed in Local DNS / CNAME Records. We can
+add CNAME records by creating a file in our dnsmasq directory
+(pihole_dnsmasq_dir) usint the template (templates/cnames.j2):</p>
+<pre class="jinja2"><code>{% for item in pihole_cnames %}
+cname={{ item.domain }},{{ item.target_domain }}
+{% endfor %}</code></pre>
+<p>Define our CNAME records, for example:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a target="_blank" href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pihole_cnames</span><span class="kw">:</span></span>
+<span id="cb11-2"><a target="_blank" href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> homeassistant</span><span class="kw">,</span><span class="at"> </span><span class="fu">target_domain</span><span class="kw">:</span><span class="at"> rpi</span><span class="kw">}</span></span>
+<span id="cb11-3"><a target="_blank" href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> nginx</span><span class="kw">,</span><span class="at"> </span><span class="fu">target_domain</span><span class="kw">:</span><span class="at"> mgmt</span><span class="kw">}</span></span></code></pre></div>
+<p>And create our dnsmasq configuration file:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a target="_blank" href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create pihole cname records</span></span>
+<span id="cb12-2"><a target="_blank" href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb12-3"><a target="_blank" href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> templates/cnames.j2</span></span>
+<span id="cb12-4"><a target="_blank" href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ pihole_dnsmasq_dir }}/02-custom-cnames.conf&quot;</span></span>
+<span id="cb12-5"><a target="_blank" href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+<p>The hosts file (DNS Records in Pi-hole) don’t act as a DNS records,
+since wildcard domains are not supported. To add wildcard domains we can
+use the following template (templates/domains.js):</p>
+<pre class="jinja2"><code>{% for item in pihole_domains %}
+address=/{{ item.domain }}/{{ item.ip }}
+{% endfor %}</code></pre>
+<p>Let’s say we want to create a local domain called homelab.local with
+subdomains allowed, so we can use pihole.homelab.local pointing to our
+Pi-hole host, say 192.168.1.23:</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a target="_blank" href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pihole_domains</span><span class="kw">:</span></span>
+<span id="cb14-2"><a target="_blank" href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="kw">-</span><span class="at"> </span><span class="kw">{</span><span class="at"> </span><span class="fu">domain</span><span class="kw">:</span><span class="at"> homelab.local</span><span class="kw">,</span><span class="at"> </span><span class="fu">ip</span><span class="kw">:</span><span class="at"> </span><span class="fl">192.168.1.23</span><span class="at"> </span><span class="kw">}</span></span></code></pre></div>
+<p>Then, create another dnsmasq configuration file:</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a target="_blank" href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create pihole domain records</span></span>
+<span id="cb15-2"><a target="_blank" href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">template</span><span class="kw">:</span></span>
+<span id="cb15-3"><a target="_blank" href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> templates/domains.j2</span></span>
+<span id="cb15-4"><a target="_blank" href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ pihole_dnsmasq_dir }}/03-custom-domains.conf&quot;</span></span>
+<span id="cb15-5"><a target="_blank" href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+  </section>
+</article>
+
+
+    </section>
+    <footer></footer>
+
+    
+  </body>
+</html>
