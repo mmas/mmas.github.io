@@ -84,6 +84,7 @@
   
 </header>
 
+  <aside id="article-nav"></aside>
   <section class="body">
     <p>Plotting <a target="_blank" href="https://en.wikipedia.org/wiki/Conic_section">conic sections</a> in <a target="_blank" href="http://matplotlib.org/">Matplotlib</a> may seem easy, but it can get complicated if we use <a target="_blank" href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot"><code>matplotlib.pyplot.plot</code></a>. Especially if we attempt o draw a conic not in its standard position (except for the hyperbola). There are some tricks we can use, like plotting in two parts for circles, ellipses and parabolas, and <a target="_blank" href="http://docs.scipy.org/doc/numpy/reference/maskedarray.html">masking</a> values where the function is not defined for hyperbolas.</p>
 <p>Instead we can create a two-dimensional Cartesian plane and draw the contour corresponding to the conic algebraic function.</p>
@@ -249,5 +250,7 @@ plt.show()</code></pre>
     <footer></footer>
 
     
+<script type="text/javascript" src="/js/article.js"></script>
+
   </body>
 </html>

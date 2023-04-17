@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="http://schema.org/Article">
+  <head>
+    <title>Hashicorp Vault as certificate authority with Ansible</title>
+    
+
+    <meta charset="utf-8">
+    <meta property="og:title" content="Hashicorp Vault as certificate authority with Ansible">
+    <meta property="og:site_name" content="Modesto Mas | Blog">
+    <meta property="og:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta property="og:image:width" content="200">
+    <meta property="og:image:height" content="200">
+    <meta property="og:url" content="https://mmas.github.io/hashicorp-vault-certificate-authority-ca-ansible">
+    <meta property="og:locale" content="en_GB">
+    <meta name="twitter:image" content="https://mmas.github.io/images/profile.jpg">
+    <meta name="twitter:url" content="https://mmas.github.io/hashicorp-vault-certificate-authority-ca-ansible">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:domain" content="mmas.github.io">
+    <meta name="twitter:title" content="Hashicorp Vault as certificate authority with Ansible">
+    <meta name="description" content="In this article we are going to build our own certificate authority using Hashicorp Vault PKI secret engine. Prerequisites Ansible A host to install V...">
+    <meta name="twitter:description" content="In this article we are going to build our own certificate authority using Hashicorp Vault PKI secret engine. Prerequisites Ansible A host to install V...">
+    <meta property="og:description" content="In this article we are going to build our own certificate authority using Hashicorp Vault PKI secret engine. Prerequisites Ansible A host to install V...">
+    <meta name="keywords" content="ansible,homelab,networking,vault">
+    <meta property="og:type" content="blog">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+<meta property="og:type" content="article">
+<meta property="article:author" content="https://github.com/mmas">
+<meta property="article:section" content="ansible">
+<meta property="article:tag" content="ansible,homelab,networking,vault">
+<meta property="article:published_time" content="2023-04-17">
+<meta property="article:modified_time" content="2023-04-17">
+
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        CommonHTML: {
+            scale: 93,
+            showMathMenu: false
+        },
+        tex2jax: {
+            "inlineMath": [["$","$"], ["\\(","\\)"]]
+        }
+    });
+    </script>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+  </head>
+  <body class="entry-detail">
+
+    
+    <header>
+  <div>
+    <img src="https://mmas.github.io/images/profile.jpg">
+    <a class="brand" href="/">Modesto Mas</a>
+    <span>Data/Python/DevOps Engineer</span>
+    <nav>
+      <ul>
+        <li><a href="/tags">Tags</a></li>
+        <li><a href="https://github.com/mmas/mmas.github.io/issues" target="_blank">Issues</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+    
+
+    <section id="content" role="main">
+    
+
+<article>
+  
+<header>
+  <h1><a href="/hashicorp-vault-certificate-authority-ca-ansible">Hashicorp Vault as certificate authority with Ansible</a></h1>
+  <time datetime="2023-04-17">Apr 17, 2023</time>
+  
+  <a class="tag" href="/tags?tag=ansible">ansible</a>
+  
+  <a class="tag" href="/tags?tag=homelab">homelab</a>
+  
+  <a class="tag" href="/tags?tag=networking">networking</a>
+  
+  <a class="tag" href="/tags?tag=vault">vault</a>
+  
+</header>
+
+  <aside id="article-nav"></aside>
+  <section class="body">
+    <p>In this article we are going to build our own certificate authority
+using <a target="_blank" href="https://www.vaultproject.io/">Hashicorp Vault</a> PKI
+secret engine.</p>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Ansible</li>
+<li>A host to install Vault</li>
+</ul>
+<p>Here, we will install Vault in Docker. To do it in this way, <a target="_blank" href="https://docs.docker.com/engine/install/">Docker</a> and the <a target="_blank" href="https://pypi.org/project/docker/">Python library for Docker</a>
+must be installed as well.</p>
+<h2 id="install-vault">Install Vault</h2>
+<p>In this example, we are going to use the <a target="_blank" href="https://developer.hashicorp.com/vault/docs/configuration/storage/filesystem">filesystem
+backend storage</a> (here are <a target="_blank" href="https://developer.hashicorp.com/vault/docs/configuration/storage">other
+storage backends</a>). Create the config file
+(<code>files/config.json</code>) to setup the storage backend:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a target="_blank" href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a target="_blank" href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;ui&quot;</span><span class="fu">:</span> <span class="kw">true</span><span class="fu">,</span></span>
+<span id="cb1-3"><a target="_blank" href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;storage&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-4"><a target="_blank" href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;file&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb1-5"><a target="_blank" href="#cb1-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">&quot;path&quot;</span><span class="fu">:</span> <span class="st">&quot;/vault/file&quot;</span></span>
+<span id="cb1-6"><a target="_blank" href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">}</span></span>
+<span id="cb1-7"><a target="_blank" href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb1-8"><a target="_blank" href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>Install Vault in Docker:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a target="_blank" href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create data directory</span></span>
+<span id="cb2-2"><a target="_blank" href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">file</span><span class="kw">:</span></span>
+<span id="cb2-3"><a target="_blank" href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">path</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ item }}&quot;</span></span>
+<span id="cb2-4"><a target="_blank" href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> directory</span></span>
+<span id="cb2-5"><a target="_blank" href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mode</span><span class="kw">:</span><span class="at"> </span><span class="dv">0777</span></span>
+<span id="cb2-6"><a target="_blank" href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">loop</span><span class="kw">:</span></span>
+<span id="cb2-7"><a target="_blank" href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> vault_data/config</span></span>
+<span id="cb2-8"><a target="_blank" href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> vault_data/file</span></span>
+<span id="cb2-9"><a target="_blank" href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb2-10"><a target="_blank" href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a target="_blank" href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> copy config</span></span>
+<span id="cb2-12"><a target="_blank" href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb2-13"><a target="_blank" href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">src</span><span class="kw">:</span><span class="at"> files/config.json</span></span>
+<span id="cb2-14"><a target="_blank" href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> vault_data/config/</span></span>
+<span id="cb2-15"><a target="_blank" href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a target="_blank" href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> run vault</span></span>
+<span id="cb2-17"><a target="_blank" href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">docker_container</span><span class="kw">:</span></span>
+<span id="cb2-18"><a target="_blank" href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> vault</span></span>
+<span id="cb2-19"><a target="_blank" href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> started</span></span>
+<span id="cb2-20"><a target="_blank" href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">image</span><span class="kw">:</span><span class="at"> vault</span></span>
+<span id="cb2-21"><a target="_blank" href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">restart_policy</span><span class="kw">:</span><span class="at"> unless-stopped</span></span>
+<span id="cb2-22"><a target="_blank" href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">capabilities</span><span class="kw">:</span></span>
+<span id="cb2-23"><a target="_blank" href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> IPC_LOCK</span></span>
+<span id="cb2-24"><a target="_blank" href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ports</span><span class="kw">:</span></span>
+<span id="cb2-25"><a target="_blank" href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;8200:8200&quot;</span></span>
+<span id="cb2-26"><a target="_blank" href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">volumes</span><span class="kw">:</span></span>
+<span id="cb2-27"><a target="_blank" href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;{{ ansible_user_dir }}/vault_data/config:/vault/config&quot;</span></span>
+<span id="cb2-28"><a target="_blank" href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> </span><span class="st">&quot;{{ ansible_user_dir }}/vault_data/file:/vault/file&quot;</span></span></code></pre></div>
+<p>Now we can set the environment variables <code>VAULT_ADDR</code> and
+<code>VAULT_TOKEN</code> to our session. <code>VAUL_ADDR</code> will be
+the host IP at port 8200 (say, http://192.168.1.23:8200). We can find
+the Vault root token in the Docker logs for the container. This is not
+recommended for production environments, but for this example, we can
+set that token as our <code>VAULT_TOKEN</code>. More information about
+Vault tokens <a target="_blank" href="https://developer.hashicorp.com/vault/tutorials/tokens/tokens">here</a>.</p>
+<h2 id="create-vault-policy">Create Vault policy</h2>
+<p>For this and the following sections, we are going to use the Ansible
+collection
+(<code>mmas.hashi_vault</code>)[https://github.com/mmas/hashi_vault-ansible-collection]
+that I created. You can install the collection using Ansible Galaxy:</p>
+<pre><code>ansible-galaxy collection install git+https://github.com/mmas/hashi_vault-ansible-collection.git</code></pre>
+<p>Define the required capabilities (<code>files/policy.hcl</code>):</p>
+<pre class="hcl"><code># Enable secrets engine
+path &quot;sys/mounts/*&quot; {
+  capabilities = [ &quot;create&quot;, &quot;read&quot;, &quot;update&quot;, &quot;delete&quot;, &quot;list&quot; ]
+}
+
+# List enabled secrets engine
+path &quot;sys/mounts&quot; {
+  capabilities = [ &quot;read&quot;, &quot;list&quot; ]
+}
+
+# Work with pki secrets engine
+path &quot;pki*&quot; {
+  capabilities = [ &quot;create&quot;, &quot;read&quot;, &quot;update&quot;, &quot;delete&quot;, &quot;list&quot;, &quot;sudo&quot; ]
+}</code></pre>
+<p>Create the policy <code>certificate-authority</code>:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a target="_blank" href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create policy</span></span>
+<span id="cb5-2"><a target="_blank" href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_policy</span><span class="kw">:</span></span>
+<span id="cb5-3"><a target="_blank" href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> certificate-authority</span></span>
+<span id="cb5-4"><a target="_blank" href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">policy</span><span class="kw">:</span><span class="at"> files/policy.hcl</span></span></code></pre></div>
+<h2 id="generate-root-ca">Generate root CA</h2>
+<p>We will generate the root CA using the PKI backend mounted at
+<code>/pki</code>. To do this, let’s enable the backend at the default
+moutn point and give a long default and maximum lease TTL, say 20
+years:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a target="_blank" href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> enable pki engine and config to issue certs with 20y ttl</span></span>
+<span id="cb6-2"><a target="_blank" href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_secrets_engine</span><span class="kw">:</span></span>
+<span id="cb6-3"><a target="_blank" href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">backend_type</span><span class="kw">:</span><span class="at"> pki</span></span>
+<span id="cb6-4"><a target="_blank" href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb6-5"><a target="_blank" href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">default_lease_ttl</span><span class="kw">:</span><span class="at"> 175200h</span></span>
+<span id="cb6-6"><a target="_blank" href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max_lease_ttl</span><span class="kw">:</span><span class="at"> 175200h</span></span></code></pre></div>
+<p>Generate the root self-signed CA with subject CN “Vault Root”:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a target="_blank" href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> generate root certificate</span></span>
+<span id="cb7-2"><a target="_blank" href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_pki_root</span><span class="kw">:</span></span>
+<span id="cb7-3"><a target="_blank" href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">common_name</span><span class="kw">:</span><span class="at"> Vault Root</span></span></code></pre></div>
+<p>Note that these modules are idempotent, so running
+<code>mmas.hashi_vault.vault_pki_root</code> multiple times with the
+same common name won’t generate new certificates unless the issuer is
+revoked.</p>
+<p>Configure the CA and CRL URLs:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> configure ca urls</span></span>
+<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_pki_urls</span><span class="kw">:</span></span>
+<span id="cb8-3"><a target="_blank" href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">issuing_certificates</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> </span><span class="st">&quot;{{ lookup(&#39;env&#39;, &#39;VAULT_ADDR&#39;) }}/v1/pki/ca&quot;</span><span class="at"> </span><span class="kw">]</span></span>
+<span id="cb8-4"><a target="_blank" href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">crl_distribution_points</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> </span><span class="st">&quot;{{ lookup(&#39;env&#39;, &#39;VAULT_ADDR&#39;) }}/v1/pki/crl&quot;</span><span class="at"> </span><span class="kw">]</span></span></code></pre></div>
+<h2 id="generate-intermediate-ca">Generate intermediate CA</h2>
+<p>In a similar way, mount another PKI secrets engine at
+<code>/pki_int</code>, set the default and maximum lease TTL to a
+shorter period (5 years), and gnereate the Intermediate CA “Vault
+Intermediate”</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a target="_blank" href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> enable pki engine at pki_int and config to issue certs with 5y ttl</span></span>
+<span id="cb9-2"><a target="_blank" href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_secrets_engine</span><span class="kw">:</span></span>
+<span id="cb9-3"><a target="_blank" href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">backend_type</span><span class="kw">:</span><span class="at"> pki</span></span>
+<span id="cb9-4"><a target="_blank" href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mount_point</span><span class="kw">:</span><span class="at"> pki_int</span></span>
+<span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb9-6"><a target="_blank" href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">default_lease_ttl</span><span class="kw">:</span><span class="at"> 43800h</span></span>
+<span id="cb9-7"><a target="_blank" href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">max_lease_ttl</span><span class="kw">:</span><span class="at"> 43800h</span></span>
+<span id="cb9-8"><a target="_blank" href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a target="_blank" href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> generate and sign intermediate certificate</span></span>
+<span id="cb9-10"><a target="_blank" href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_pki_intermediate</span><span class="kw">:</span></span>
+<span id="cb9-11"><a target="_blank" href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mount_point</span><span class="kw">:</span><span class="at"> pki_int</span></span>
+<span id="cb9-12"><a target="_blank" href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">common_name</span><span class="kw">:</span><span class="at"> Vault Intermediate</span></span>
+<span id="cb9-13"><a target="_blank" href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">format</span><span class="kw">:</span><span class="at"> pem_bundle</span></span></code></pre></div>
+<p>The module <code>mmas.hashi_vault.vault_pki_intermediate</code>
+generates an intermediate certificated with the specified common name if
+not existing, signs it with the root CA, and imports the
+certificate.</p>
+<h2 id="issue-certificate">Issue certificate</h2>
+<p>We’ll need PKI roles to issue certificates. Create a role from the
+PKi at <code>/pki_int</code> for our domain <code>homelab.local</code>,
+allowing subdomains, valid for a year:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a target="_blank" href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> create pk_int role</span></span>
+<span id="cb10-2"><a target="_blank" href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">mmas.hashi_vault.vault_pki_role</span><span class="kw">:</span></span>
+<span id="cb10-3"><a target="_blank" href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mount_point</span><span class="kw">:</span><span class="at"> pki_int</span></span>
+<span id="cb10-4"><a target="_blank" href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> homelab.local</span></span>
+<span id="cb10-5"><a target="_blank" href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">allowed_domains</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="at"> homelab.local </span><span class="kw">]</span></span>
+<span id="cb10-6"><a target="_blank" href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">allow_subdomains</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb10-7"><a target="_blank" href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">max_ttl</span><span class="kw">:</span><span class="at"> 8760h</span></span></code></pre></div>
+<p>Again, <code>mmas.hashi_vault.vault_pki_role</code> module won’t
+create a new role if a role with the given name already exists.</p>
+<p>Issue a certficate for our domain <code>homelab.local</code>:</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a target="_blank" href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">mmas.hashi_vault.vault_pki_certificate</span><span class="kw">:</span></span>
+<span id="cb11-2"><a target="_blank" href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">mount_point</span><span class="kw">:</span><span class="at"> pki_int</span></span>
+<span id="cb11-3"><a target="_blank" href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">role_name</span><span class="kw">:</span><span class="at"> homelab.local</span></span>
+<span id="cb11-4"><a target="_blank" href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">common_name</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;*.homelab.local&quot;</span></span>
+<span id="cb11-5"><a target="_blank" href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">ttl</span><span class="kw">:</span><span class="at"> 8760h</span></span>
+<span id="cb11-6"><a target="_blank" href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">register</span><span class="kw">:</span><span class="at"> output</span></span></code></pre></div>
+<p>In this case, <code>mmas.hashi_vault.vault_pki_certificate</code>
+won’t issue a new certificate if a non-revoked one with that common name
+already exists, however, we can generate a new one with
+<code>state: created</code> (and get the certificate and private key) or
+revoke all the certificates for that common name with
+<code>state: revoked</code>. If we don’t save the private key once the
+certificate is issued, we can issue a new one and save the new private
+key.</p>
+<h2 id="using-the-certificates">Using the certificates</h2>
+<p>We registered a variable from the last task output, so we can use
+that to get the private key:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a target="_blank" href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> save private key to /tmp/</span></span>
+<span id="cb12-2"><a target="_blank" href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb12-3"><a target="_blank" href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /tmp/homelab.local.pem</span></span>
+<span id="cb12-4"><a target="_blank" href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ output.certificate.private_key }}&quot;</span></span></code></pre></div>
+<p>And to get the fullchain certificate:</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a target="_blank" href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> save certificate to /tmp/</span></span>
+<span id="cb13-2"><a target="_blank" href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb13-3"><a target="_blank" href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /tmp/homelab.local.crt</span></span>
+<span id="cb13-4"><a target="_blank" href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ output.certificate.certificate }}</span><span class="sc">\n</span><span class="st">{{ output.certificate.ca_chain|join(&#39;</span><span class="sc">\n</span><span class="st">&#39;) }}&quot;</span></span></code></pre></div>
+<p>We can use those in NGINX (<code>ssl_certificate_key</code> and
+<code>ssl_certificate</code>) or Apache
+(<code>SSLCertificateKeyFile</code> and
+<code>SSLCertificateFile</code>).</p>
+<p>The browsers won’t accept self-signed certificates, so we need to
+import our root CA or CA chain. We can use the CA chain from
+<code>output.certificate.ca_chain</code> or the root CA from
+<code>output.certificate.ca_chain[1]</code>.</p>
+<p>We can also get the root, intermediate and server certificates using
+the following lookup:</p>
+<pre><code>&quot;{{ lookup(&#39;mmas.hashi_vault.vault_pki_root&#39;, &#39;Vault Root&#39;).certificate }}&quot;
+&quot;{{ lookup(&#39;mmas.hashi_vault.vault_pki_intermediate&#39;, &#39;Vault Intermediate&#39;).certificate }}&quot;
+&quot;{{ lookup(&#39;mmas.hashi_vault.vault_pki_certificate&#39;, &#39;*.homelab.local&#39;).certificate }}&quot;</code></pre>
+<p>To install the root/chain certificate in Firefox, Settings &gt;
+Preferences &gt; Privacy and Security &gt; Certificates &gt; View
+Certificates &gt; Authorities &gt; Import, and tick Identify
+Websites.</p>
+<p><img
+src="https://raw.githubusercontent.com/mmas/mmas.github.io/master/images/vault-root-firefox.png" /></p>
+<p><img
+src="https://raw.githubusercontent.com/mmas/mmas.github.io/master/images/vault-intermediate-firefox.png" /></p>
+<p><img
+src="https://raw.githubusercontent.com/mmas/mmas.github.io/master/images/vault-server-firefox.png" /></p>
+  </section>
+</article>
+
+
+    </section>
+    <footer></footer>
+
+    
+<script type="text/javascript" src="/js/article.js"></script>
+
+  </body>
+</html>

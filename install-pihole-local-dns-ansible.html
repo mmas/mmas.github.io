@@ -20,14 +20,14 @@
     <meta name="description" content="In this article we will install Pi-hole as our DNS server, and create local hosts and DNS records. Prerequisites Ansible A host to install Pi-hole wit...">
     <meta name="twitter:description" content="In this article we will install Pi-hole as our DNS server, and create local hosts and DNS records. Prerequisites Ansible A host to install Pi-hole wit...">
     <meta property="og:description" content="In this article we will install Pi-hole as our DNS server, and create local hosts and DNS records. Prerequisites Ansible A host to install Pi-hole wit...">
-    <meta name="keywords" content="ansible,homelab,pihole">
+    <meta name="keywords" content="ansible,homelab,networking,pihole">
     <meta property="og:type" content="blog">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
 <meta property="og:type" content="article">
 <meta property="article:author" content="https://github.com/mmas">
 <meta property="article:section" content="ansible">
-<meta property="article:tag" content="ansible,homelab,pihole">
+<meta property="article:tag" content="ansible,homelab,networking,pihole">
 <meta property="article:published_time" content="2023-04-14">
 <meta property="article:modified_time" content="2023-04-14">
 
@@ -76,10 +76,13 @@
   
   <a class="tag" href="/tags?tag=homelab">homelab</a>
   
+  <a class="tag" href="/tags?tag=networking">networking</a>
+  
   <a class="tag" href="/tags?tag=pihole">pihole</a>
   
 </header>
 
+  <aside id="article-nav"></aside>
   <section class="body">
     <p>In this article we will install <a target="_blank" href="https://pi-hole.net/">Pi-hole</a> as our DNS server, and create
 local hosts and DNS records.</p>
@@ -173,7 +176,7 @@ network and connect again.</p>
 <p>In Pi-hole, if we go to Local DNS / DNS Records, we can see that our
 hosts list will be read from /etc/hosts and /etc/pihole/custom.list. We
 mounted <code>pihole_conf_dir</code> at /etc/pihole/, so we can create
-the hosts template (templates/hosts.j2) as:</p>
+the hosts template (<code>templates/hosts.j2</code>) as:</p>
 <pre class="jinja2"><code>{% for item in pihole_hosts %}
 {{ item.ip }} {{ item.domain }}
 {% endfor %}</code></pre>
@@ -191,7 +194,8 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a target
 <span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
 <p>Our CNAME records are displayed in Local DNS / CNAME Records. We can
 add CNAME records by creating a file in our dnsmasq directory
-(pihole_dnsmasq_dir) usint the template (templates/cnames.j2):</p>
+(<code>pihole_dnsmasq_dir</code>) usint the template
+(<code>templates/cnames.j2</code>):</p>
 <pre class="jinja2"><code>{% for item in pihole_cnames %}
 cname={{ item.domain }},{{ item.target_domain }}
 {% endfor %}</code></pre>
@@ -209,7 +213,7 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a targe
 <span id="cb12-5"><a target="_blank" href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
 <p>The hosts file (DNS Records in Pi-hole) don’t act as a DNS records,
 since wildcard domains are not supported. To add wildcard domains we can
-use the following template (templates/domains.js):</p>
+use the following template (<code>templates/domains.js</code>):</p>
 <pre class="jinja2"><code>{% for item in pihole_domains %}
 address=/{{ item.domain }}/{{ item.ip }}
 {% endfor %}</code></pre>
@@ -234,5 +238,7 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a targe
     <footer></footer>
 
     
+<script type="text/javascript" src="/js/article.js"></script>
+
   </body>
 </html>

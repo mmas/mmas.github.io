@@ -80,6 +80,7 @@
   
 </header>
 
+  <aside id="article-nav"></aside>
   <section class="body">
     <p>Using a <a target="_blank" href="https://www.elastic.co/guide/en/elasticsearch/painless/5.5/index.html">painless</a> script we can sort documents in <a target="_blank" href="https://www.elastic.co/products/elasticsearch">Elasticsearch</a> by the proximity of a certain date. For example, sorting {1,2,3,4,5} by the proximity of the 3 gives [3,2,4,1,5], so each number is equally or more distant from 3 than its previous one.</p>
 <p>The simplest way to achieve this is sorting by the absolute value of the difference of the date field of the document and the required reference date:</p>
@@ -300,5 +301,7 @@ min(diff, 365-diff)</code></pre>
     <footer></footer>
 
     
+<script type="text/javascript" src="/js/article.js"></script>
+
   </body>
 </html>

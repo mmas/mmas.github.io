@@ -78,6 +78,7 @@
   
 </header>
 
+  <aside id="article-nav"></aside>
   <section class="body">
     <p>In this post we'll see how to read our <a target="_blank" href="https://httpd.apache.org/">Apache HTTP server</a> access log into a <a target="_blank" href="http://pandas.pydata.org/">Pandas</a> dataframe. First of all, we should take a look to the <a target="_blank" href="https://httpd.apache.org/docs/2.2/logs.html">logging documentation</a> to see how the log lines are formatted. In this case, we are going to use the <em>combined log format</em>, which corresponds to:</p>
 <pre><code>%h %l %u %t \&quot;%r\&quot; %&gt;s %b \&quot;%{Referer}i\&quot; \&quot;%{User-agent}i\&quot;
@@ -287,5 +288,7 @@ memory usage: 483.4+ KB
     <footer></footer>
 
     
+<script type="text/javascript" src="/js/article.js"></script>
+
   </body>
 </html>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500,400|Roboto+Condensed|Roboto:400,400italic');
+@import url('https://fonts.googleapis.com/css?family=Roboto+Mono:500,400|Roboto+Condensed:400,500|Roboto:400,400italic');
 
 :root {
   --blue: #303080;
@@ -150,6 +150,12 @@ table th{font-weight:600}
 table td{font-weight:400}
 table tr:nth-child(even){background-color:#f8f8f8}
 body.entry-detail article{margin-bottom:40px;padding-bottom:40px;border-bottom:solid 1px #eee}
+#article-nav{position:fixed;left:48px;width:auto;max-width:400px}
+#article-nav ul{margin:0;padding:0}
+#article-nav li{margin:0;padding:0;list-style:none;line-height:1.2;margin:12px 0}
+#article-nav a{color:#999;font-family:'Roboto Condensed';font-size:16px}
+#article-nav a:hover{color:#666}
+#article-nav a.active,#article-nav a.active:hover{color:#000;font-weight:500}
 body.entry-detail article header{padding:0 20px;margin-bottom:20px}
 body.entry-detail article section.body{margin-bottom:40px}
 body.entry-detail article h1{font-size:42px;margin:20px 0 16px;line-height:1.1}
@@ -198,4 +204,13 @@ body.entry-list.tags article.active {display:block}
     body.entry-detail article h2{font-size:26px}
     body.entry-detail article h3{font-size:20px}
     body.entry-list h1 {font-size:26px}
+}
+@media only screen and (max-width: 1499px){
+    #article-nav{display:none}
+}
+@media only screen and (min-width: 1500px) and (max-width: 1649px){
+    #article-nav{left:24px;max-width:280px}
+}
+@media only screen and (min-width: 1650px) and (max-width: 1849px){
+    #article-nav{left:24px;max-width:340px}
 }

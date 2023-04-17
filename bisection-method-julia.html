@@ -80,6 +80,7 @@
   
 </header>
 
+  <aside id="article-nav"></aside>
   <section class="body">
     <p>The <a href="https://en.wikipedia.org/wiki/Bisection_method">bisection method</a> is a simple root-finding method. Methods for finding roots are iterative and try to find an approximate root <span class="math">\(x\)</span> that fulfills <span class="math">\(|f(x)| \leq \epsilon\)</span>, where <span class="math">\(\epsilon\)</span> is a small number referred later as <em>tolerance</em>.</p>
 <p>Being <span class="math">\(f\)</span> a nonlinear equation and <span class="math">\([a,b]\)</span> the interval where the root has to be found, in each iteration, the bisection method algorithm evaluates <span class="math">\(f\)</span> at the midpoint <span class="math">\(c\)</span> of the interval <span class="math">\([a,b]\)</span> and compares it against the evaluation at <span class="math">\(a\)</span> and <span class="math">\(b\)</span>. If <span class="math">\(f(c)=0\)</span> the problem is solved and the root is <span class="math">\(c\)</span>, otherwise the next iteration will continue with the interval <span class="math">\([a,c]\)</span> if <span class="math">\(f(x)\)</span> changes the sign in the left half interval or with <span class="math">\([c,b]\)</span> if it changes in the right half interval. This procedure will continue till find the root in the iteration or, most commonly, by reaching a minimum interval, defined by the tolerance, where the solution is found, get an approximation of the root as the last midpoint <span class="math">\(c\)</span>.</p>
@@ -128,5 +129,7 @@ false</code></pre>
     <footer></footer>
 
     
+<script type="text/javascript" src="/js/article.js"></script>
+
   </body>
 </html>
