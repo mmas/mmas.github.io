@@ -228,11 +228,33 @@ class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a target
 <span id="cb7-13"><a target="_blank" href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /etc/docker/certs.d/registry.homelab.local/root.crt</span></span>
 <span id="cb7-14"><a target="_blank" href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ root_ca }}&quot;</span></span>
 <span id="cb7-15"><a target="_blank" href="#cb7-15" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
+<p>To allow pulls from Kubernetes with containerd, we can install the
+certificate and restart containerd:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> install root certificate</span></span>
+<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">copy</span><span class="kw">:</span></span>
+<span id="cb8-3"><a target="_blank" href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">dest</span><span class="kw">:</span><span class="at"> /usr/local/share/ca-certificates/root.crt</span></span>
+<span id="cb8-4"><a target="_blank" href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">content</span><span class="kw">:</span><span class="at"> </span><span class="st">&quot;{{ root_ca }}&quot;</span></span>
+<span id="cb8-5"><a target="_blank" href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb8-6"><a target="_blank" href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">notify</span><span class="kw">:</span></span>
+<span id="cb8-7"><a target="_blank" href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> update ca certificates</span></span>
+<span id="cb8-8"><a target="_blank" href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> restart containerd</span></span></code></pre></div>
+<p>With the handlers:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a target="_blank" href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> update ca certificates</span></span>
+<span id="cb9-2"><a target="_blank" href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">command</span><span class="kw">:</span><span class="at"> update-ca-certificates</span></span>
+<span id="cb9-3"><a target="_blank" href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span>
+<span id="cb9-4"><a target="_blank" href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a target="_blank" href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> restart containerd</span></span>
+<span id="cb9-6"><a target="_blank" href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">service</span><span class="kw">:</span></span>
+<span id="cb9-7"><a target="_blank" href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">name</span><span class="kw">:</span><span class="at"> containerd</span></span>
+<span id="cb9-8"><a target="_blank" href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">state</span><span class="kw">:</span><span class="at"> restarted</span></span>
+<span id="cb9-9"><a target="_blank" href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">become</span><span class="kw">:</span><span class="at"> </span><span class="ch">yes</span></span></code></pre></div>
 <h2 id="use-the-registry">Use the registry</h2>
 <p>Now, we’ll be able to use our Docker registry:</p>
-<div class="sourceCode" id="cb8"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a target="_blank" href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> image tag myapp registry.homelab.local/myapp</span>
-<span id="cb8-2"><a target="_blank" href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> push registry.homelab.local/myapp</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb10-1"><a target="_blank" href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> image tag myapp registry.homelab.local/myapp</span>
+<span id="cb10-2"><a target="_blank" href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ex">docker</span> push registry.homelab.local/myapp</span></code></pre></div>
 <p>If we get the error</p>
 <pre><code>Request Entity Too Large</code></pre>
 <p>we need to increase <a target="_blank" href="https://nginx.org/en/docs/http/ngx_http_core_module.html#client_max_body_size"><code>client_max_body_size</code></a>
